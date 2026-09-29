@@ -1,0 +1,33 @@
+Description:
+    Installs RailsEventViewer into your Rails application.
+
+    This will:
+    - Create a migration for the events table (if using ActiveRecord adapter)
+    - Create an initializer with configuration options
+    - Mount the engine in your routes file
+
+Example:
+    bin/rails generate rails_event_viewer:install
+
+    This will create:
+        db/migrate/YYYYMMDDHHMMSS_create_rails_event_viewer_entries.rb
+        config/initializers/rails_event_viewer.rb
+
+    And add to config/routes.rb:
+        mount RailsEventViewer::Engine, at: "/events"
+
+Options:
+    --storage-adapter=ADAPTER  # Storage adapter to use: active_record (default), redis, memory
+    --skip-migration           # Skip creating the migration file
+    --skip-initializer         # Skip creating the initializer
+    --skip-routes              # Skip mounting the engine in routes
+
+Examples:
+    # Standard install with ActiveRecord
+    bin/rails generate rails_event_viewer:install
+
+    # Install with Redis adapter (no migration needed)
+    bin/rails generate rails_event_viewer:install --storage-adapter=redis
+
+    # Only create initializer (skip migration and routes)
+    bin/rails generate rails_event_viewer:install --skip-migration --skip-routes

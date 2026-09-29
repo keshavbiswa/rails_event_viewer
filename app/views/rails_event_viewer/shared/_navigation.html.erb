@@ -1,0 +1,47 @@
+<nav class="bg-indigo-600">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <%= link_to rails_event_viewer.root_path, class: "text-white text-xl font-bold" do %>
+            Event Viewer
+          <% end %>
+        </div>
+        <div class="ml-10 flex items-baseline space-x-4">
+          <%= link_to "Dashboard", rails_event_viewer.root_path,
+              class: nav_link_class("dashboard") %>
+          <%= link_to "Events", rails_event_viewer.events_path,
+              class: nav_link_class("events") %>
+          <%= link_to "Event Types", rails_event_viewer.event_types_path,
+              class: nav_link_class("event_types") %>
+          <%= link_to "Groups", rails_event_viewer.groups_path,
+              class: nav_link_class("groups") %>
+          <%= link_to "Analytics", rails_event_viewer.analytics_overview_path,
+              class: nav_link_class("analytics") %>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- Search -->
+        <%= form_with url: rails_event_viewer.search_events_path, method: :get, class: "relative", data: { turbo_frame: "_top" } do |f| %>
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg class="h-4 w-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <%= f.search_field :q,
+                value: params[:q],
+                placeholder: "Search events...",
+                class: "w-64 rounded-md bg-indigo-500 py-2 pl-10 pr-3 text-sm text-white placeholder-indigo-200 focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white" %>
+          </div>
+        <% end %>
+
+        <!-- Timezone indicator -->
+        <div class="text-indigo-200 text-sm" title="Current timezone">
+          <%= Time.zone.name %>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,42 @@
+<tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='<%= rails_event_viewer.event_path(event_id(event)) %>'">
+  <td class="px-6 py-4">
+    <div class="flex flex-col max-w-md">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 w-fit">
+        <%= event_name(event) %>
+      </span>
+      <div class="text-sm text-gray-500 mt-1 truncate">
+        <code class="text-xs"><%= truncate_json(event_payload(event), length: 50) %></code>
+      </div>
+    </div>
+  </td>
+  <td class="px-6 py-4">
+    <% tags = event_tags(event) %>
+    <% if tags.present? %>
+      <div class="flex flex-wrap gap-1 max-w-xs">
+        <% tags.first(3).each do |key, value| %>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+            <%= key %>: <%= value.to_s.truncate(15) %>
+          </span>
+        <% end %>
+        <% if tags.size > 3 %>
+          <span class="text-xs text-gray-500">+<%= tags.size - 3 %> more</span>
+        <% end %>
+      </div>
+    <% else %>
+      <span class="text-gray-400 text-sm">-</span>
+    <% end %>
+  </td>
+  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+    <%= time_ago_with_title(event_occurred_at(event)) %>
+  </td>
+  <td class="px-6 py-4 text-sm text-gray-500">
+    <% filepath = event_source_file(event) %>
+    <% if filepath.present? %>
+      <code class="text-xs bg-gray-100 px-2 py-1 rounded block truncate max-w-xs" title="<%= filepath %>">
+        <%= truncate(event_short_filepath(event), length: 30) %>:<%= event_source_line(event) %>
+      </code>
+    <% else %>
+      <span class="text-gray-400">-</span>
+    <% end %>
+  </td>
+</tr>

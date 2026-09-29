@@ -1,0 +1,11 @@
+{
+  "name": "rails_event_viewer",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./app/assets/stylesheets/rails_event_viewer/tailwind.css -o ./app/assets/stylesheets/rails_event_viewer/application.css --minify",
+    "watch:css": "tailwindcss -i ./app/assets/stylesheets/rails_event_viewer/tailwind.css -o ./app/assets/stylesheets/rails_event_viewer/application.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
