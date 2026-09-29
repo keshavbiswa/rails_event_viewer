@@ -1,0 +1,134 @@
+<% content_for(:title, "Group: #{@value} - Rails Event Viewer") %>
+
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to rails_event_viewer.groups_path(key: @key, source: @source), class: "text-gray-400 hover:text-gray-600", aria: { label: "Back to groups" } do %>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      <% end %>
+      <div>
+        <p class="text-sm text-gray-500"><%= @key.to_s.titleize %></p>
+        <h1 class="text-2xl font-bold text-gray-900">
+          <code class="bg-gray-100 px-2 py-1 rounded"><%= @value %></code>
+        </h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-4">
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Total Events",
+        value: number_with_delimiter(@total_count),
+        icon: "database" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Event Types",
+        value: @event_names.size,
+        icon: "tag" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Duration",
+        value: @duration ? format_duration(@duration) : "-",
+        icon: "clock" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Source",
+        value: @source.to_s.titleize,
+        icon: "calendar" %>
+  </div>
+
+  <!-- Timeline -->
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-medium text-gray-900">Event Timeline</h3>
+      <% if @first_event_at && @last_event_at %>
+        <p class="text-sm text-gray-500">
+          <%= @first_event_at.strftime("%Y-%m-%d %H:%M:%S") %> to <%= @last_event_at.strftime("%Y-%m-%d %H:%M:%S") %>
+        </p>
+      <% end %>
+    </div>
+
+    <% if @events.any? %>
+      <div class="relative">
+        <div class="absolute left-12 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+        <div class="divide-y divide-gray-100">
+          <% @events.each_with_index do |event, index| %>
+            <a href="<%= rails_event_viewer.event_path(event_id(event)) %>" class="relative pl-16 pr-6 py-4 hover:bg-gray-50 block">
+              <div class="absolute left-10 top-6 w-4 h-4 rounded-full border-2 border-indigo-500 bg-white"></div>
+
+              <% if @first_event_at && event_occurred_at(event) %>
+                <% offset = event_occurred_at(event) - @first_event_at %>
+                <div class="absolute left-0 top-4 w-9 text-right">
+                  <span class="text-xs text-gray-400" title="<%= format_duration(offset) %> from start">
+                    <% if offset < 0.001 %>
+                      0
+                    <% elsif offset < 1 %>
+                      +<%= (offset * 1000).round %>ms
+                    <% elsif offset < 60 %>
+                      +<%= offset.round(1) %>s
+                    <% else %>
+                      +<%= (offset / 60).round %>m
+                    <% end %>
+                  </span>
+                </div>
+              <% end %>
+
+              <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                  <!-- Event name badge -->
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <%= event_name(event) %>
+                  </span>
+
+                  <!-- Payload preview -->
+                  <% payload = event_payload(event) %>
+                  <% if payload.present? && payload.any? %>
+                    <div class="mt-2">
+                      <code class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                        <%= truncate_json(payload, length: 100) %>
+                      </code>
+                    </div>
+                  <% end %>
+
+                  <!-- Tags -->
+                  <% tags = event_tags(event) %>
+                  <% if tags.present? && tags.any? %>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                      <% tags.first(3).each do |key, value| %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                          <%= key %>: <%= value.to_s.truncate(20) %>
+                        </span>
+                      <% end %>
+                      <% if tags.size > 3 %>
+                        <span class="text-xs text-gray-500">+<%= tags.size - 3 %> more</span>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+
+                <div class="ml-4 flex-shrink-0 text-right">
+                  <p class="text-sm text-gray-500">
+                    <%= time_ago_with_title(event_occurred_at(event)) %>
+                  </p>
+                  <% if event_source_file(event).present? %>
+                    <p class="text-xs text-gray-400 mt-1">
+                      <%= event_short_filepath(event) %>:<%= event_source_line(event) %>
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            </a>
+          <% end %>
+        </div>
+      </div>
+
+      <%= render "rails_event_viewer/shared/pagination", pagy: @pagy %>
+    <% else %>
+      <div class="px-6 py-12 text-center text-gray-500">
+        No events found in this group.
+      </div>
+    <% end %>
+  </div>
+</div>

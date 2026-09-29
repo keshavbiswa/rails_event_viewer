@@ -1,0 +1,113 @@
+<% content_for(:title, "Dashboard - Rails Event Viewer") %>
+
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+
+  <!-- Stats cards -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Total Events",
+        value: number_with_delimiter(@total_events),
+        icon: "database" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Events Today",
+        value: number_with_delimiter(@events_today),
+        icon: "calendar" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Event Types",
+        value: @event_names.count,
+        icon: "tag" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Avg/Hour (Today)",
+        value: @events_today > 0 ? (@events_today.to_f / [Time.current.hour, 1].max).round(1) : 0,
+        icon: "clock" %>
+  </div>
+
+  <!-- Charts row -->
+  <% if analytics_supported? %>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Events over time chart -->
+      <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Events (Last 24 Hours)</h3>
+        <div class="h-72 overflow-hidden">
+          <% if @events_over_time.any? %>
+            <%= line_chart @events_over_time,
+                id: "events-timeline",
+                height: "100%",
+                colors: ["#4F46E5"],
+                library: { plugins: { legend: { display: false } } } %>
+          <% else %>
+            <div class="flex items-center justify-center h-full text-gray-400">
+              No events in the last 24 hours
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Events by type chart -->
+      <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Events by Type</h3>
+        <div class="h-72 overflow-hidden">
+          <% if @events_by_type.any? %>
+            <%= pie_chart @events_by_type,
+                id: "events-by-type",
+                donut: true,
+                height: "100%",
+                colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16"] %>
+          <% else %>
+            <div class="flex items-center justify-center h-full text-gray-400">
+              No events to display
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Recent events -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      <h3 class="text-lg font-medium text-gray-900">Recent Events</h3>
+      <%= link_to "View all", rails_event_viewer.events_path, class: "text-indigo-600 hover:text-indigo-500 text-sm font-medium" %>
+    </div>
+
+    <% if @recent_events.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payload</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @recent_events.each do |event| %>
+              <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='<%= rails_event_viewer.event_path(event_id(event)) %>'">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <%= event_name(event) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500">
+                  <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 60) %></code>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= time_ago_with_title(event_occurred_at(event)) %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center text-gray-500">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No events yet</h3>
+        <p class="mt-1 text-sm text-gray-500">Events will appear here once they are captured.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

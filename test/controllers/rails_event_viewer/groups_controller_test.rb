@@ -1,0 +1,212 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module RailsEventViewer
+  class GroupsControllerTest < ActionDispatch::IntegrationTest
+    setup do
+      Entry.delete_all
+      @original_group_keys = RailsEventViewer.group_keys
+      RailsEventViewer.group_keys = [:request_id, :order_id]
+    end
+
+    teardown do
+      RailsEventViewer.group_keys = @original_group_keys
+    end
+
+    test "index renders successfully with no group keys" do
+      RailsEventViewer.group_keys = []
+
+      get rails_event_viewer.groups_path
+
+      assert_response :success
+    end
+
+    test "index renders successfully with group keys configured" do
+      get rails_event_viewer.groups_path
+
+      assert_response :success
+    end
+
+    test "index uses first group key by default" do
+      Entry.create!(
+        name: "test.event",
+        context: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.groups_path
+
+      assert_response :success
+    end
+
+    test "index with specific key parameter" do
+      Entry.create!(
+        name: "order.created",
+        context: { order_id: "order-456" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.groups_path(key: "order_id")
+
+      assert_response :success
+    end
+
+    test "index with source parameter context" do
+      Entry.create!(
+        name: "test.event",
+        context: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.groups_path(key: "request_id", source: "context")
+
+      assert_response :success
+    end
+
+    test "index with source parameter tags" do
+      Entry.create!(
+        name: "test.event",
+        tags: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.groups_path(key: "request_id", source: "tags")
+
+      assert_response :success
+    end
+
+    test "index groups events and returns correct group counts" do
+      3.times do
+        Entry.create!(
+          name: "test.event",
+          context: { request_id: "req-123" },
+          occurred_at: Time.current
+        )
+      end
+      2.times do
+        Entry.create!(
+          name: "test.event",
+          context: { request_id: "req-456" },
+          occurred_at: Time.current
+        )
+      end
+
+      get rails_event_viewer.groups_path(key: "request_id")
+
+      assert_response :success
+      groups = controller.instance_variable_get(:@groups)
+      assert_equal 2, groups.size
+      req123 = groups.find { |g| g[:value] == "req-123" }
+      assert_equal 3, req123[:count]
+    end
+
+    test "index ignores key not in configured group_keys" do
+      get rails_event_viewer.groups_path(key: "x') IS NOT NULL OR 1=1 --")
+
+      assert_response :success
+      assert_equal "request_id", controller.instance_variable_get(:@selected_key)
+    end
+
+    test "index with invalid source param falls back to context" do
+      Entry.create!(
+        name: "test.event",
+        context: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.groups_path(key: "request_id", source: "payload")
+
+      assert_response :success
+      assert_equal :context, controller.instance_variable_get(:@source)
+    end
+
+    test "show renders successfully" do
+      Entry.create!(
+        name: "test.event",
+        context: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.group_path("req-123", key: "request_id")
+
+      assert_response :success
+    end
+
+    test "show with context source" do
+      Entry.create!(
+        name: "test.event",
+        context: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.group_path("req-123", key: "request_id", source: "context")
+
+      assert_response :success
+    end
+
+    test "show with tags source" do
+      Entry.create!(
+        name: "test.event",
+        tags: { request_id: "req-123" },
+        occurred_at: Time.current
+      )
+
+      get rails_event_viewer.group_path("req-123", key: "request_id", source: "tags")
+
+      assert_response :success
+    end
+
+    test "show displays timeline with correct event count" do
+      5.times do |i|
+        Entry.create!(
+          name: "event.#{i}",
+          context: { request_id: "req-123" },
+          occurred_at: i.seconds.ago
+        )
+      end
+
+      get rails_event_viewer.group_path("req-123", key: "request_id")
+
+      assert_response :success
+      assert_equal 5, controller.instance_variable_get(:@total_count)
+    end
+
+    test "show total_count covers all pages not just current page" do
+      30.times do |i|
+        Entry.create!(
+          name: "event.#{i}",
+          context: { request_id: "req-123" },
+          occurred_at: i.minutes.ago
+        )
+      end
+
+      get rails_event_viewer.group_path("req-123", key: "request_id")
+
+      assert_response :success
+      assert_equal 30, controller.instance_variable_get(:@total_count)
+    end
+
+    test "show with no matching events" do
+      get rails_event_viewer.group_path("nonexistent", key: "request_id")
+      assert_response :success
+    end
+
+    test "show time span covers all events not just current page" do
+      Entry.create!(name: "first", context: { request_id: "req-123" }, occurred_at: 2.hours.ago)
+      25.times { Entry.create!(name: "middle", context: { request_id: "req-123" }, occurred_at: 30.minutes.ago) }
+      Entry.create!(name: "last", context: { request_id: "req-123" }, occurred_at: 1.minute.ago)
+
+      get rails_event_viewer.group_path("req-123", key: "request_id")
+
+      assert_response :success
+      first_at = controller.instance_variable_get(:@first_event_at)
+      last_at = controller.instance_variable_get(:@last_event_at)
+
+      assert_not_nil first_at
+      assert_not_nil last_at
+      assert first_at < last_at
+      assert last_at - first_at > 60 * 60, "time span should cover more than 1 hour, covering all pages"
+    end
+  end
+end

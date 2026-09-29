@@ -1,0 +1,90 @@
+# frozen_string_literal: true
+
+RailsEventViewer.configure do |config|
+  # ==========================================================================
+  # Storage Configuration
+  # ==========================================================================
+
+  # Choose your storage adapter:
+  #   :active_record - Stores events in your database (default)
+  #   :redis         - Stores events in Redis (ephemeral, high-volume)
+  #   :memory        - In-memory storage (development/testing only)
+  #   :null          - Discards all events (useful for disabling in production)
+  #   CustomAdapter  - Pass a custom class that includes RailsEventViewer::Adapter
+  #
+  config.storage_adapter = :<%= storage_adapter %>
+<% if storage_adapter == "redis" %>
+
+  config.adapter_options = {
+    # redis: Redis.new(url: ENV["REDIS_URL"]),  # Your Redis instance
+    # key_prefix: "rails_event_viewer",          # Key prefix for Redis keys
+    # max_events: 10_000                         # Maximum events to retain
+  }
+<% elsif storage_adapter == "active_record" %>
+
+  # ActiveRecord adapter options (none required for default setup)
+  # config.adapter_options = {}
+<% end %>
+
+  # ==========================================================================
+  # Performance Configuration
+  # ==========================================================================
+
+  # Enable async buffered writes for better performance
+  # When true, events are buffered and flushed in batches
+  # config.async = true
+
+  # Number of events to buffer before auto-flushing
+  # config.buffer_size = 100
+
+  # Flush interval in seconds (flushes even if buffer isn't full)
+  # config.flush_interval = 2
+
+  # Sample rate: 1.0 = capture all events, 0.1 = capture 10% of events
+  # Useful for high-volume production environments
+  # config.sample_rate = 1.0
+
+  # ==========================================================================
+  # General Configuration
+  # ==========================================================================
+
+  # How long to keep events before cleanup (used by retention task)
+  # config.retention_period = 7.days
+
+  # Only capture specific events (empty = capture all Rails.event.notify() events)
+  # Note: This only affects events emitted via Rails.event.notify(), NOT internal
+  # Rails instrumentation events (sql.active_record, process_action.action_controller, etc.)
+  # which use ActiveSupport::Notifications and are not captured by this gem.
+  # config.captured_events = ["user.created", "order.placed"]
+
+  # Ignore specific events (supports strings and regex patterns)
+  # config.ignored_events = ["internal.heartbeat", /^debug\./]
+
+  # Default pagination limit
+  # config.per_page = 25
+
+  # ==========================================================================
+  # Group Tracking
+  # ==========================================================================
+
+  # Context/tag keys used to group related events together
+  # Events sharing the same value for these keys are shown together
+  # Example: All events with the same request_id form a "request group"
+  # config.group_keys = [:request_id, :order_id, :job_id, :user_id]
+
+  # ==========================================================================
+  # Authentication
+  # ==========================================================================
+
+  # Option 1: HTTP Basic Auth (simple, good for internal tools)
+  # config.http_basic_auth_enabled = true
+  # config.http_basic_auth_user = ENV["RAILS_EVENT_VIEWER_USER"]
+  # config.http_basic_auth_password = ENV["RAILS_EVENT_VIEWER_PASSWORD"]
+
+  # Option 2: Custom authentication (flexible, integrates with your auth system)
+  # The block receives the controller instance
+  # config.authentication = ->(controller) {
+  #   controller.authenticate_user!  # Devise example
+  #   controller.current_user.admin? # Require admin role
+  # }
+end

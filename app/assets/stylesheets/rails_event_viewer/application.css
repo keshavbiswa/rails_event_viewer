@@ -1,0 +1,32 @@
+/* RailsEventViewer Application Styles */
+/* Note: Tailwind CSS is loaded via CDN in development. For production, compile using:
+   npx tailwindcss -i ./app/assets/stylesheets/rails_event_viewer/tailwind.css \
+                   -o ./app/assets/stylesheets/rails_event_viewer/application.css --minify
+*/
+
+/* Custom styles that don't require Tailwind compilation */
+.json-tree {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+}
+
+.json-tree-key {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.json-tree-string {
+  color: #059669;
+}
+
+.json-tree-number {
+  color: #2563eb;
+}
+
+.json-tree-boolean {
+  color: #7c3aed;
+}
+
+.json-tree-null {
+  color: #9ca3af;
+}

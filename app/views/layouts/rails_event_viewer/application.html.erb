@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+<head>
+  <title><%= content_for(:title) || "Rails Event Viewer" %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <!-- Tailwind CSS CDN (replace with bundled CSS in production) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js for Chartkick (with date adapter for time-series charts) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartkick@5.0.1/dist/chartkick.min.js"></script>
+
+  <%= stylesheet_link_tag "rails_event_viewer/application", media: "all", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags if respond_to?(:javascript_importmap_tags) %>
+
+  <%= yield :head %>
+</head>
+<body class="h-full">
+  <div class="min-h-full">
+    <%= render "rails_event_viewer/shared/navigation" %>
+
+    <main class="py-6">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <% if notice.present? %>
+          <div class="mb-4 rounded-md bg-green-50 p-4">
+            <p class="text-sm font-medium text-green-800"><%= notice %></p>
+          </div>
+        <% end %>
+
+        <% if alert.present? %>
+          <div class="mb-4 rounded-md bg-red-50 p-4">
+            <p class="text-sm font-medium text-red-800"><%= alert %></p>
+          </div>
+        <% end %>
+
+        <%= yield %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

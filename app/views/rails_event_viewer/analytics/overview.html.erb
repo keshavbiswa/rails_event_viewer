@@ -1,0 +1,134 @@
+<% content_for(:title, "Analytics - Rails Event Viewer") %>
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">Analytics</h1>
+
+    <!-- Date range picker -->
+    <%= form_with url: rails_event_viewer.analytics_overview_path, method: :get, class: "flex items-center space-x-3" do |f| %>
+      <%= f.date_field :start_date,
+          value: @date_range.begin.to_date,
+          class: "rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3" %>
+      <span class="text-gray-500">to</span>
+      <%= f.date_field :end_date,
+          value: @date_range.end.to_date,
+          class: "rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3" %>
+      <%= f.submit "Apply",
+          class: "bg-indigo-600 text-white px-5 py-2.5 rounded-md font-medium hover:bg-indigo-700 cursor-pointer" %>
+    <% end %>
+  </div>
+
+  <!-- Overview stats -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Total Events",
+        value: number_with_delimiter(@total_events),
+        icon: "database" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Unique Types",
+        value: @unique_event_types,
+        icon: "tag" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Avg/Hour",
+        value: @avg_events_per_hour,
+        icon: "clock" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Peak Period",
+        value: @peak_period ? @peak_period.first.to_s : "N/A",
+        icon: "calendar" %>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Events Over Time</h3>
+      <div class="h-72 overflow-hidden">
+        <% if @events_over_time.any? %>
+          <%= line_chart @events_over_time,
+              id: "analytics-timeline",
+              height: "100%",
+              colors: ["#4F46E5"],
+              library: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+              } %>
+        <% else %>
+          <div class="flex items-center justify-center h-full text-gray-400">
+            No data for the selected period
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Events by Type</h3>
+      <div class="h-72 overflow-hidden">
+        <% if @events_by_type.any? %>
+          <%= bar_chart @events_by_type,
+              id: "analytics-by-type",
+              height: "100%",
+              colors: ["#4F46E5"],
+              library: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } }
+              } %>
+        <% else %>
+          <div class="flex items-center justify-center h-full text-gray-400">
+            No data for the selected period
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event type breakdown table -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-medium text-gray-900">Event Type Breakdown</h3>
+    </div>
+
+    <% if @events_by_type.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distribution</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <% @events_by_type.each do |name, count| %>
+              <% percentage = @total_events > 0 ? (count.to_f / @total_events * 100) : 0 %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <%= link_to rails_event_viewer.events_path(name: name), class: "text-indigo-600 hover:text-indigo-900" do %>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      <%= name %>
+                    </span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%= number_with_delimiter(count) %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= number_to_percentage(percentage, precision: 1) %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-600 h-2 rounded-full" style="width: <%= [percentage, 100].min %>%"></div>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center text-gray-500">
+        No events for the selected period.
+      </div>
+    <% end %>
+  </div>
+</div>

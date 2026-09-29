@@ -1,0 +1,65 @@
+<% content_for(:title, "Events - Rails Event Viewer") %>
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">
+      Events
+      <% if @query.present? %>
+        <span class="text-gray-500 font-normal text-lg">
+          matching "<%= @query %>"
+        </span>
+      <% end %>
+    </h1>
+    <div class="text-sm text-gray-500">
+      <%= @pagy.count %> total events
+    </div>
+  </div>
+
+  <div class="flex gap-6">
+    <!-- Filters sidebar -->
+    <aside class="w-72 flex-shrink-0">
+      <%= render "rails_event_viewer/events/filters_sidebar", event_names: @event_names %>
+    </aside>
+
+    <!-- Events list -->
+    <div class="flex-1 min-w-0">
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+          <% if @events.any? %>
+            <div class="overflow-x-auto">
+              <table class="w-full divide-y divide-gray-200 table-fixed">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                    <th class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                    <th class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <% @events.each do |event| %>
+                    <%= render "rails_event_viewer/events/event_row", event: event %>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <%= render "rails_event_viewer/shared/pagination", pagy: @pagy %>
+          <% else %>
+            <div class="px-6 py-12 text-center text-gray-500">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
+              <p class="mt-1 text-sm text-gray-500">
+                <% if @query.present? || params[:name].present? %>
+                  Try adjusting your filters or search query.
+                <% else %>
+                  Events will appear here once they are captured.
+                <% end %>
+              </p>
+            </div>
+          <% end %>
+        </div>
+    </div>
+  </div>
+</div>

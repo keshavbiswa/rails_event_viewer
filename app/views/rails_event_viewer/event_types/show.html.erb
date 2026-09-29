@@ -1,0 +1,102 @@
+<% content_for(:title, "#{@event_type_name} - Rails Event Viewer") %>
+
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to rails_event_viewer.event_types_path, class: "text-gray-400 hover:text-gray-600" do %>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      <% end %>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xl font-medium bg-indigo-100 text-indigo-800">
+            <%= @event_type_name %>
+          </span>
+        </h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Total Events",
+        value: number_with_delimiter(@total_count),
+        icon: "database" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Events Today",
+        value: number_with_delimiter(@events_today),
+        icon: "calendar" %>
+    <%= render "rails_event_viewer/shared/stat_card",
+        title: "Page",
+        value: "#{@pagy.page} of #{@pagy.pages}",
+        icon: "tag" %>
+  </div>
+
+  <!-- Events list -->
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-medium text-gray-900">Events</h3>
+    </div>
+
+    <% if @events.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payload</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @events.each do |event| %>
+              <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='<%= rails_event_viewer.event_path(event_id(event)) %>'">
+                <td class="px-6 py-4">
+                  <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 80) %></code>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% tags = event_tags(event) %>
+                  <% if tags.present? %>
+                    <div class="flex flex-wrap gap-1">
+                      <% tags.first(2).each do |key, value| %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          <%= key %>: <%= value.to_s.truncate(15) %>
+                        </span>
+                      <% end %>
+                      <% if tags.size > 2 %>
+                        <span class="text-xs text-gray-500">+<%= tags.size - 2 %></span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-gray-400 text-sm">-</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= time_ago_with_title(event_occurred_at(event)) %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <% filepath = event_source_file(event) %>
+                  <% if filepath.present? %>
+                    <code class="text-xs"><%= event_short_filepath(event) %>:<%= event_source_line(event) %></code>
+                  <% else %>
+                    <span class="text-gray-400">-</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%= render "rails_event_viewer/shared/pagination", pagy: @pagy %>
+    <% else %>
+      <div class="px-6 py-12 text-center text-gray-500">
+        No events of this type yet.
+      </div>
+    <% end %>
+  </div>
+</div>

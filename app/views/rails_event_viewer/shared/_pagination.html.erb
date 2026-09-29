@@ -1,0 +1,60 @@
+<% if pagy.pages > 1 %>
+  <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+    <div class="flex-1 flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-700">
+          Showing
+          <span class="font-medium"><%= pagy.from %></span>
+          to
+          <span class="font-medium"><%= pagy.to %></span>
+          of
+          <span class="font-medium"><%= pagy.count %></span>
+          results
+        </p>
+      </div>
+      <nav class="flex items-center space-x-1" aria-label="Pagination">
+        <% if pagy.previous %>
+          <%= link_to url_for(page: pagy.previous), class: "relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" do %>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="ml-1">Prev</span>
+          <% end %>
+        <% else %>
+          <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-200 rounded-md cursor-not-allowed">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="ml-1">Prev</span>
+          </span>
+        <% end %>
+
+        <% (1..pagy.pages).each do |page_num| %>
+          <% if page_num == pagy.page %>
+            <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"><%= page_num %></span>
+          <% elsif page_num == 1 || page_num == pagy.pages || (page_num >= pagy.page - 2 && page_num <= pagy.page + 2) %>
+            <%= link_to page_num, url_for(page: page_num), class: "relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" %>
+          <% elsif page_num == pagy.page - 3 || page_num == pagy.page + 3 %>
+            <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-700">...</span>
+          <% end %>
+        <% end %>
+
+        <% if pagy.next %>
+          <%= link_to url_for(page: pagy.next), class: "relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" do %>
+            <span class="mr-1">Next</span>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          <% end %>
+        <% else %>
+          <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-200 rounded-md cursor-not-allowed">
+            <span class="mr-1">Next</span>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        <% end %>
+      </nav>
+    </div>
+  </div>
+<% end %>
