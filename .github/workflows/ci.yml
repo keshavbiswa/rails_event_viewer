@@ -65,3 +65,44 @@ jobs:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  release:
+    needs: [lint, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4.3
+          bundler-cache: true
+
+      - name: Check whether this version is already on RubyGems
+        id: check
+        run: |
+          version=$(ruby -r ./lib/rails_event_viewer/version -e 'print RailsEventViewer::VERSION')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if curl -sf "https://rubygems.org/api/v2/rubygems/rails_event_viewer/versions/$version.json" > /dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to RubyGems
+        if: steps.check.outputs.publish == 'true'
+        uses: rubygems/release-gem@v1
+
+      - name: Create GitHub release
+        if: steps.check.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '/^## /{p = index($0, "## " v) == 1; next} p' CHANGELOG.md > release_notes.md
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file release_notes.md
