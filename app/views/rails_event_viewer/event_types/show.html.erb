@@ -31,7 +31,7 @@
         icon: "calendar" %>
     <%= render "rails_event_viewer/shared/stat_card",
         title: "Page",
-        value: "#{@pagy.page} of #{@pagy.pages}",
+        value: "#{@pagination.page} of #{@pagination.pages}",
         icon: "tag" %>
   </div>
 
@@ -92,7 +92,7 @@
         </table>
       </div>
 
-      <%= render "rails_event_viewer/shared/pagination", pagy: @pagy %>
+      <%= render "rails_event_viewer/shared/pagination", pagination: @pagination %>
     <% else %>
       <div class="px-6 py-12 text-center text-gray-500">
         No events of this type yet.

@@ -27,8 +27,8 @@ module RailsEventViewer
         RailsEventViewer.events.with_context(@key, @value)
       end
 
-      @pagy, @events = pagy_events(events)
-      @total_count = @pagy.count
+      @pagination, @events = paginate(events)
+      @total_count = @pagination.count
       @event_names = @events.map { |e| event_name(e) }.uniq
 
       @first_event_at, @last_event_at = current_adapter.event_time_span(events)

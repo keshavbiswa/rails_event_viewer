@@ -41,6 +41,10 @@ module RailsEventViewer
       end
     end
 
+    def page_path(page)
+      "#{request.path}?#{request.query_parameters.merge("page" => page.to_s).to_query}"
+    end
+
     def timezone_options
       ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }
     end

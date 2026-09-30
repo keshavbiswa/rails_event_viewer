@@ -1,10 +1,9 @@
 PATH
   remote: .
   specs:
-    rails_event_viewer (0.1.1)
+    rails_event_viewer (0.1.2)
       chartkick (>= 5.0)
       groupdate (>= 6.0)
-      pagy (>= 43.0)
       rails (>= 8.1.0)
 
 GEM
@@ -151,9 +150,6 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.4-x86_64-linux-musl)
       racc (~> 1.4)
-    pagy (43.2.0)
-      json
-      yaml
     parallel (1.27.0)
     parser (3.3.10.0)
       ast (~> 2.4.1)
@@ -276,7 +272,6 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    yaml (0.4.0)
     zeitwerk (2.7.3)
 
 PLATFORMS

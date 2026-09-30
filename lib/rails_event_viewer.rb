@@ -1,4 +1,3 @@
-require "pagy"
 require "chartkick"
 require "groupdate"
 
@@ -118,5 +117,4 @@ require "rails_event_viewer/adapter"
 require "rails_event_viewer/events_relation"
 require "rails_event_viewer/subscriber"
 require "rails_event_viewer/json_query"
-require "rails_event_viewer/pagy_countable"
 require "rails_event_viewer/time_utils"
