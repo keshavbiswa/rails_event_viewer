@@ -1,7 +1,5 @@
 module RailsEventViewer
   class ApplicationController < ActionController::Base
-    include Pagy::Method
-
     layout "rails_event_viewer/application"
 
     before_action :authenticate!
@@ -72,13 +70,9 @@ module RailsEventViewer
       (params[:per_page] || RailsEventViewer.per_page).to_i.clamp(1, 100)
     end
 
-    # Helper to create paginated results from EventsRelation
-    # Uses a countable wrapper to make EventsRelation work with Pagy
-    def pagy_events(relation)
-      countable = RailsEventViewer::PagyCountable.new(relation)
-      pagy, records = pagy(:offset, countable, limit: per_page)
-
-      [pagy, records.to_a]
+    def paginate(relation)
+      pagination = Page.new(count: relation.count, per_page: per_page, page: params[:page])
+      [pagination, relation.offset(pagination.offset).limit(pagination.per_page).to_a]
     end
   end
 end

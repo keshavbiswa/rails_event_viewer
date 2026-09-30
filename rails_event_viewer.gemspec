@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.3"
 
   spec.add_dependency "rails", ">= 8.1.0"
-  spec.add_dependency "pagy", ">= 43.0"
   spec.add_dependency "chartkick", ">= 5.0"
   spec.add_dependency "groupdate", ">= 6.0"
 end

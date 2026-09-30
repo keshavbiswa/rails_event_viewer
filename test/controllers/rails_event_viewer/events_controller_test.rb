@@ -136,5 +136,42 @@ module RailsEventViewer
 
       assert_equal [@event.id], controller.instance_variable_get(:@events).map(&:id)
     end
+
+    test "index paginates with page param and clamps out of range pages" do
+      29.times { |i| Entry.create!(name: "bulk.#{i}", occurred_at: i.minutes.ago) }
+
+      get rails_event_viewer.events_path(page: 2)
+      pagination = controller.instance_variable_get(:@pagination)
+      assert_equal [2, 2, 30], [pagination.page, pagination.pages, pagination.count]
+      assert_equal (24..28).map { |i| "bulk.#{i}" }, controller.instance_variable_get(:@events).map(&:name)
+      assert_select "a[href*='page=1']"
+
+      get rails_event_viewer.events_path(page: 99)
+      assert_response :success
+      assert_equal 2, controller.instance_variable_get(:@pagination).page
+    end
+
+    test "page links keep filters and per_page" do
+      30.times { |i| Entry.create!(name: "keep.me", occurred_at: i.minutes.ago) }
+
+      get rails_event_viewer.events_path(name: "keep.me", per_page: 10)
+
+      links = css_select("nav[aria-label=Pagination] a").map { |a| a["href"] }
+      assert_includes links, rails_event_viewer.events_path(name: "keep.me", page: 2, per_page: 10)
+
+      get links.find { |link| link.include?("page=2") }
+      assert_equal ["keep.me"], controller.instance_variable_get(:@events).map(&:name).uniq
+      assert_equal 10, controller.instance_variable_get(:@events).size
+    end
+
+    test "page links cannot be pointed at another host" do
+      30.times { |i| Entry.create!(name: "keep.me", occurred_at: i.minutes.ago) }
+
+      get rails_event_viewer.events_path(host: "evil.example", protocol: "https", per_page: 10)
+
+      links = css_select("nav[aria-label=Pagination] a").map { |a| a["href"] }
+      assert links.any?
+      assert links.all? { |link| link.start_with?(rails_event_viewer.events_path) }, links.inspect
+    end
   end
 end

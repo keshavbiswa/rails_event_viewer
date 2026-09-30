@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 (2026-09-30)
+
+- Removed the `pagy` dependency. Pagination is handled by a small built-in class, so host apps on any Pagy version, or none, can install the gem.
+- Page links now keep the active filters, search query, and `per_page`. Previously every page link dropped them, so page 2 of a filtered list showed unfiltered results.
+- A page number past the end now shows the last page instead of an empty one.
+
 ## 0.1.1 (2026-09-30)
 
 - The dashboard now works under a strict Content Security Policy. Tailwind CSS is compiled into the gem, and Chart.js, its date adapter, and Chartkick are served from the host app with CSP nonces instead of from CDNs.

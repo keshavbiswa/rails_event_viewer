@@ -2,7 +2,7 @@ module RailsEventViewer
   class EventsController < ApplicationController
     def index
       relation = apply_filters(RailsEventViewer.events)
-      @pagy, @events = pagy_events(relation)
+      @pagination, @events = paginate(relation)
       @event_names = current_adapter.distinct_event_names
     end
 
@@ -20,7 +20,7 @@ module RailsEventViewer
     def search
       @query = params[:q]
       relation = RailsEventViewer.events.search(@query)
-      @pagy, @events = pagy_events(relation)
+      @pagination, @events = paginate(relation)
       @event_names = current_adapter.distinct_event_names
 
       render :index

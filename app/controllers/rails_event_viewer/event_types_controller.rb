@@ -8,8 +8,8 @@ module RailsEventViewer
       @event_type_name = params[:name]
       total_events = RailsEventViewer.events.with_name(@event_type_name)
 
-      @pagy, @events = pagy_events(total_events)
-      @total_count = @pagy.count
+      @pagination, @events = paginate(total_events)
+      @total_count = @pagination.count
       @events_today = total_events.since(Time.current.beginning_of_day).count
     end
   end

@@ -17,6 +17,8 @@ end
 class ActiveSupport::TestCase
   setup do
     @original_async = RailsEventViewer.async
+    @original_captured_events = RailsEventViewer.captured_events.dup
+    @original_ignored_events = RailsEventViewer.ignored_events.dup
     RailsEventViewer.async = false
 
     RailsEventViewer.reset_adapter!
@@ -24,8 +26,8 @@ class ActiveSupport::TestCase
 
   teardown do
     RailsEventViewer.async = @original_async
-    RailsEventViewer.captured_events = []
-    RailsEventViewer.ignored_events = []
+    RailsEventViewer.captured_events = @original_captured_events
+    RailsEventViewer.ignored_events = @original_ignored_events
     RailsEventViewer.reset_adapter!
   end
 end

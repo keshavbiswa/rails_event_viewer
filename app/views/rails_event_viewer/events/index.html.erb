@@ -11,7 +11,7 @@
       <% end %>
     </h1>
     <div class="text-sm text-gray-500">
-      <%= @pagy.count %> total events
+      <%= @pagination.count %> total events
     </div>
   </div>
 
@@ -43,7 +43,7 @@
               </table>
             </div>
 
-            <%= render "rails_event_viewer/shared/pagination", pagy: @pagy %>
+            <%= render "rails_event_viewer/shared/pagination", pagination: @pagination %>
           <% else %>
             <div class="px-6 py-12 text-center text-gray-500">
               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
