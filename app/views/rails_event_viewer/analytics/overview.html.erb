@@ -46,7 +46,7 @@
         <% if @events_over_time.any? %>
           <%= line_chart @events_over_time,
               id: "analytics-timeline",
-              height: "100%",
+              html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
               colors: ["#4F46E5"],
               library: {
                 plugins: { legend: { display: false } },
@@ -66,7 +66,7 @@
         <% if @events_by_type.any? %>
           <%= bar_chart @events_by_type,
               id: "analytics-by-type",
-              height: "100%",
+              html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
               colors: ["#4F46E5"],
               library: {
                 indexAxis: 'y',
@@ -117,7 +117,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-indigo-600 h-2 rounded-full" style="width: <%= [percentage, 100].min %>%"></div>
+                    <div class="bg-indigo-600 h-2 rounded-full" data-event-viewer-width="<%= [percentage, 100].min %>"></div>
                   </div>
                 </td>
               </tr>

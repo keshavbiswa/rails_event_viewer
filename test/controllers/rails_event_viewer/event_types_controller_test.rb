@@ -65,5 +65,15 @@ module RailsEventViewer
 
       assert_response :success
     end
+
+    test "show keeps dots in the event name" do
+      Entry.create!(name: "order.placed", occurred_at: Time.current)
+
+      get rails_event_viewer.event_type_path("order.placed")
+
+      assert_response :success
+      assert_equal "order.placed", controller.instance_variable_get(:@event_type_name)
+      assert_equal 1, controller.instance_variable_get(:@total_count)
+    end
   end
 end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails_event_viewer (0.1.0)
+    rails_event_viewer (0.1.1)
       chartkick (>= 5.0)
       groupdate (>= 6.0)
       pagy (>= 43.0)

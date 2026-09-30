@@ -11,8 +11,13 @@ module RailsEventViewer
 
     initializer "rails_event_viewer.assets" do |app|
       if app.config.respond_to?(:assets)
-        app.config.assets.paths << root.join("app/assets/stylesheets")
-        app.config.assets.precompile += %w[rails_event_viewer/application.css]
+        app.config.assets.precompile += %w[
+          rails_event_viewer/application.css
+          rails_event_viewer/application.js
+          rails_event_viewer/chart.umd.min.js
+          rails_event_viewer/chartjs-adapter-date-fns.bundle.min.js
+          rails_event_viewer/chartkick.min.js
+        ]
       end
     end
 

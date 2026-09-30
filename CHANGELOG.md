@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 (2026-09-30)
+
+- The dashboard now works under a strict Content Security Policy. Tailwind CSS is compiled into the gem, and Chart.js, its date adapter, and Chartkick are served from the host app with CSP nonces instead of from CDNs.
+- Replaced inline `onclick` handlers and inline `style` attributes with data attributes and a small bundled script, so clickable rows, the payload Copy button, chart sizing, and progress bars work without `unsafe-inline`.
+- The dashboard no longer loads the host app's importmap JavaScript.
+- Fixed event type and group pages for names and values containing dots, such as `order.placed` or `alice@example.com`. Rails was reading the part after the dot as a format, so these pages rendered empty.
+- Ruby 3.3 or newer is required.
+
 ## 0.1.0 (2026-09-29)
 
 Initial release.

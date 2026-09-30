@@ -13,6 +13,6 @@ RailsEventViewer::Engine.routes.draw do
     get :events_by_type
   end
 
-  resources :event_types, only: [:index, :show], param: :name
-  resources :groups, only: [:index, :show]
+  resources :event_types, only: [:index, :show], param: :name, constraints: { name: %r{[^/]+} }
+  resources :groups, only: [:index, :show], constraints: { id: %r{[^/]+} }
 end

@@ -208,5 +208,15 @@ module RailsEventViewer
       assert first_at < last_at
       assert last_at - first_at > 60 * 60, "time span should cover more than 1 hour, covering all pages"
     end
+
+    test "show keeps dots in the group value" do
+      Entry.create!(name: "user.signed_in", context: { request_id: "alice@example.com" }, occurred_at: Time.current)
+
+      get rails_event_viewer.group_path("alice@example.com", key: "request_id")
+
+      assert_response :success
+      assert_equal "alice@example.com", controller.instance_variable_get(:@value)
+      assert_equal 1, controller.instance_variable_get(:@total_count)
+    end
   end
 end

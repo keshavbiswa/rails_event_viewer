@@ -6,16 +6,12 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
-  <!-- Tailwind CSS CDN (replace with bundled CSS in production) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Chart.js for Chartkick (with date adapter for time-series charts) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartkick@5.0.1/dist/chartkick.min.js"></script>
-
   <%= stylesheet_link_tag "rails_event_viewer/application", media: "all", "data-turbo-track": "reload" %>
-  <%= javascript_importmap_tags if respond_to?(:javascript_importmap_tags) %>
+  <%= javascript_include_tag "rails_event_viewer/chart.umd.min",
+        "rails_event_viewer/chartjs-adapter-date-fns.bundle.min",
+        "rails_event_viewer/chartkick.min",
+        "rails_event_viewer/application",
+        nonce: true %>
 
   <%= yield :head %>
 </head>

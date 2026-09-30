@@ -54,7 +54,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% @events.each do |event| %>
-              <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='<%= rails_event_viewer.event_path(event_id(event)) %>'">
+              <tr class="hover:bg-gray-50 cursor-pointer" data-event-viewer-href="<%= rails_event_viewer.event_path(event_id(event)) %>">
                 <td class="px-6 py-4">
                   <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 80) %></code>
                 </td>
