@@ -59,10 +59,9 @@ module RailsEventViewer
     end
 
     test "#postgresql_contains with key only" do
-      query, key = JsonQuery.postgresql_contains(:tags, "environment", nil)
+      condition = JsonQuery.postgresql_contains(:tags, "environment", nil)
 
-      assert_equal "tags ? ?", query
-      assert_equal "environment", key
+      assert_includes Entry.where(*condition).to_sql, "(tags ? 'environment')"
     end
 
     test "#mysql_contains with key and value" do

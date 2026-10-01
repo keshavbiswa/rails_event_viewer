@@ -42,7 +42,7 @@ module RailsEventViewer
       if value.present?
         ["#{column} @> ?", { key.to_s => value }.to_json]
       else
-        ["#{column} ? ?", key.to_s]
+        ["#{column} ? :key", { key: key.to_s }]
       end
     end
 
