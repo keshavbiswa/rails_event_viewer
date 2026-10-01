@@ -61,6 +61,8 @@ RailsEventViewer.configure do |config|
 end
 ```
 
+With `async`, events are written by a background thread, never by your web requests. The buffer holds at most 10 times `buffer_size` events. If storage can't keep up, the oldest are dropped and a warning is logged. Events still in the buffer are written on a normal shutdown but lost if the process is killed.
+
 Internal Rails events such as `active_record.*` and `action_controller.*` are ignored by default. Remove a pattern from `ignored_events` to capture it.
 
 ## Authentication

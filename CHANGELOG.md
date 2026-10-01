@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 (2026-10-01)
+
+- The flusher thread starts on the first buffered event, not at boot, so consoles and rake tasks no longer run an idle thread.
+- Flusher start/stop messages log at debug level.
+- Events emitted after shutdown are written immediately instead of lost.
+- Web requests never write to storage. A full buffer wakes the flusher thread instead.
+- The buffer is capped at 10 times `buffer_size`. Overflow drops the oldest events and logs a warning.
+- Removed the unused ActionCable broadcast.
+
 ## 0.1.2 (2026-09-30)
 
 - Removed the `pagy` dependency. Pagination is handled by a small built-in class, so host apps on any Pagy version, or none, can install the gem.
