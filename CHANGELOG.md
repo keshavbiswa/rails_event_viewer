@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 (2026-10-01)
+
+- Forked workers no longer duplicate the parent's buffered events on exit.
+- Payload, tags and context are snapshotted with `as_json` at emit time
+- keys are now strings and values are JSON types (e.g. `Time` becomes a string).
+- The flusher writes inside the Rails executor.
+- Shutdown has a deadline and logs buffered and dropped events.
+
 ## 0.2.0 (2026-10-01)
 
 - Pluggable buffers: `config.buffer` accepts any object implementing `RailsEventViewer::Buffer` (`push`, `drain`, `commit`, `revert`, `dead`, `size`, `after_fork`). `push` returns the new size. The in-memory buffer remains the default.

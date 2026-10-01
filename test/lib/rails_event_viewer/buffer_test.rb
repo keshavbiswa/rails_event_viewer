@@ -628,6 +628,28 @@ module RailsEventViewer
       RailsEventViewer.logger = original_logger
     end
 
+    test "shutdown reports dropped events" do
+      original_buffer_size = RailsEventViewer.buffer_size
+      original_logger = RailsEventViewer.logger
+      RailsEventViewer.buffer_size = 1
+      output = StringIO.new
+      RailsEventViewer.logger = Logger.new(output)
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::ConnectionNotEstablished, "database down" }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      flusher = Flusher.new(RecordingBuffer.new)
+      flusher.define_singleton_method(:ensure_thread!) { }
+      15.times { |i| flusher.push({ name: "event.#{i}" }) }
+
+      flusher.stop!
+
+      assert_includes output.string, "[RailsEventViewer] Dropped 5 events because the buffer was full"
+      assert_equal 1, output.string.scan("Dropped").size
+    ensure
+      RailsEventViewer.buffer_size = original_buffer_size
+      RailsEventViewer.logger = original_logger
+    end
+
     private
 
     def in_forked_child_of_a_buffering_parent

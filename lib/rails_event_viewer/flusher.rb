@@ -63,9 +63,10 @@ module RailsEventViewer
         break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
         flush!
-        break if @buffer.size >= remaining
+        break if @buffer.size >= remaining # no progress, stop retrying
       end
 
+      report_dropped_events
       leftover = @buffer.size
       effective_logger&.warn("[RailsEventViewer] #{leftover} events still buffered at shutdown") if leftover.positive?
     end
@@ -114,7 +115,11 @@ module RailsEventViewer
     end
 
     def report_dropped_events
-      dropped = @mutex.synchronize { @dropped_count.tap { @dropped_count = 0 } }
+      dropped = @mutex.synchronize do
+        count = @dropped_count
+        @dropped_count = 0
+        count
+      end
       return if dropped.zero?
 
       effective_logger&.warn("[RailsEventViewer] Dropped #{dropped} events because the buffer was full")
