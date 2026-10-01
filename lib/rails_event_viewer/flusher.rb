@@ -13,6 +13,7 @@ module RailsEventViewer
       @thread = nil
       @shutdown_requested = false
       @dropped_count = 0
+      @writing = 0
       @pid = Process.pid
     end
 
@@ -31,13 +32,16 @@ module RailsEventViewer
       handle_fork_if_needed
       return true if @buffer.size.zero?
 
-      Rails.application.executor.wrap do
+      Rails.application.executor.wrap(source: "application.rails_event_viewer") do
         events = @buffer.drain([@buffer.size, max_buffer_size].min)
         next true if events.empty?
 
+        @writing = events.size
         written = @writer.write(events, split: !shutdown_requested?)
         report_dropped_events if written
         written
+      ensure
+        @writing = 0
       end
     rescue => e
       log_error("[RailsEventViewer] Failed to flush: #{e.message}")
@@ -52,7 +56,7 @@ module RailsEventViewer
       if @thread&.alive?
         @flush_requests << true
         @thread.join(shutdown_timeout)
-        effective_logger&.warn("[RailsEventViewer] Flusher thread still busy after #{shutdown_timeout}s") if @thread.alive?
+        effective_logger&.warn("[RailsEventViewer] Flusher thread still busy after #{shutdown_timeout}s writing #{@writing} events") if @thread.alive?
       end
 
       @mutex.synchronize { @thread = nil }

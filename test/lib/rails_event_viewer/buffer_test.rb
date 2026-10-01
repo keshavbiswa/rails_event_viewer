@@ -44,10 +44,16 @@ module RailsEventViewer
     setup do
       Entry.delete_all
       @original_raise_on_error = Rails.event.instance_variable_get(:@raise_on_error)
+      @original_buffer_size = RailsEventViewer.buffer_size
+      @original_flush_interval = RailsEventViewer.flush_interval
+      @original_logger = RailsEventViewer.logger
     end
 
     teardown do
       Rails.event.raise_on_error = @original_raise_on_error
+      RailsEventViewer.buffer_size = @original_buffer_size
+      RailsEventViewer.flush_interval = @original_flush_interval
+      RailsEventViewer.logger = @original_logger
     end
 
     test "the memory buffer drains up to the limit and never blocks when empty" do
@@ -107,9 +113,7 @@ module RailsEventViewer
 
     test "a failed write is reverted into the buffer instead of committed" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::StatementInvalid, "disk full" }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |_| raise ActiveRecord::StatementInvalid, "disk full" }
       subscriber = Subscriber.new
       buffer.push({ name: "order.placed", occurred_at: Time.current })
 
@@ -123,13 +127,11 @@ module RailsEventViewer
     test "after three failed attempts, a batch is written one event at a time and the rejected event is kept" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
       written = []
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |events|
+      stub_adapter do |events|
         raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
 
         written.concat(events)
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
       %w[good.1 poison good.2].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
 
@@ -149,11 +151,9 @@ module RailsEventViewer
 
     test "an event is dropped only after it is rejected on its own three times" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |events|
+      stub_adapter do |events|
         raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
       buffer.push({ name: "poison", occurred_at: Time.current })
 
@@ -172,14 +172,10 @@ module RailsEventViewer
       given_up = []
       buffer.define_singleton_method(:dead) { |entries| given_up.concat(entries) }
       RailsEventViewer.buffer = buffer
-      original_logger = RailsEventViewer.logger
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |events|
+      output = capture_log
+      stub_adapter do |events|
         raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
       buffer.push({ name: "poison", payload: { order_id: 42 }, occurred_at: Time.current })
 
@@ -192,14 +188,10 @@ module RailsEventViewer
       assert_not_includes buffer.committed.map { |e| e[:name] }, "poison"
       assert_match(/Gave up on 1 events the adapter rejected 3 times \(bad payload\): poison/, output.string)
       assert_no_match(/order_id/, output.string)
-    ensure
-      RailsEventViewer.logger = original_logger
     end
 
     test "giving up on many large events logs one bounded line" do
-      original_logger = RailsEventViewer.logger
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
+      output = capture_log
       buffer = RecordingBuffer.new
       events = Array.new(1000) { |i| { name: "event.#{i}", payload: { blob: "x" * 100_000 } } }
 
@@ -209,12 +201,9 @@ module RailsEventViewer
       assert_operator output.string.bytesize, :<, 1_000
       assert_match(/Gave up on 1000 events/, output.string)
       assert_equal 1000, buffer.committed.size
-    ensure
-      RailsEventViewer.logger = original_logger
     end
 
     test "events dropped by the buffer cap go to the dead hook" do
-      original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 1
       buffer = RecordingBuffer.new
       given_up = []
@@ -226,22 +215,18 @@ module RailsEventViewer
 
       assert_equal %w[event.0 event.1], given_up.map { |e| e[:name] }
       assert_empty buffer.committed
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
     end
 
     test "an event that fails once on its own is retried, not dropped" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
       calls = Hash.new(0)
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |events|
+      stub_adapter do |events|
         raise ActiveRecord::StatementInvalid, "batch failed" if events.size > 1
 
         name = events.first[:name]
         calls[name] += 1
         raise ActiveRecord::Deadlocked, "deadlock" if name == "unlucky" && calls[name] == 1
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
       %w[good unlucky].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
 
@@ -255,12 +240,10 @@ module RailsEventViewer
     test "during an outage the split gives up after three failed writes and keeps the batch" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
       calls = 0
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |_|
+      stub_adapter do |_|
         calls += 1
         raise ActiveRecord::ConnectionNotEstablished, "database down"
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
       10.times { |i| buffer.push({ name: "event.#{i}", occurred_at: Time.current }) }
 
@@ -272,7 +255,6 @@ module RailsEventViewer
     end
 
     test "a capacity drop forgets the strikes of the events it drops" do
-      original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 1
       flusher = Flusher.new(RecordingBuffer.new)
       flusher.define_singleton_method(:ensure_thread!) { }
@@ -284,24 +266,18 @@ module RailsEventViewer
       10.times { |i| flusher.push({ name: "event.#{i}" }) }
 
       assert_empty strikes
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
     end
 
     test "the flusher backs off exponentially while writes keep failing, even as new events arrive" do
       RailsEventViewer.async = true
-      original_buffer_size = RailsEventViewer.buffer_size
-      original_flush_interval = RailsEventViewer.flush_interval
       RailsEventViewer.buffer_size = 1
       RailsEventViewer.flush_interval = 0.3
       RailsEventViewer.buffer = RecordingBuffer.new
       attempts = 0
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |_|
+      stub_adapter do |_|
         attempts += 1
         raise ActiveRecord::StatementInvalid, "disk full"
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
 
       25.times do |i|
@@ -312,8 +288,6 @@ module RailsEventViewer
       assert_includes 1..2, attempts
     ensure
       subscriber&.stop!
-      RailsEventViewer.buffer_size = original_buffer_size
-      RailsEventViewer.flush_interval = original_flush_interval
     end
 
     test "the memory buffer keeps a reverted batch for the next flush" do
@@ -327,18 +301,14 @@ module RailsEventViewer
 
     test "the flusher waits for the next interval after a failed write instead of retrying at once" do
       RailsEventViewer.async = true
-      original_buffer_size = RailsEventViewer.buffer_size
-      original_flush_interval = RailsEventViewer.flush_interval
       RailsEventViewer.buffer_size = 1
       RailsEventViewer.flush_interval = 5
       RailsEventViewer.buffer = RecordingBuffer.new
       attempts = 0
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |_|
+      stub_adapter do |_|
         attempts += 1
         raise ActiveRecord::StatementInvalid, "disk full"
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
 
       subscriber.emit(event_hash("order.placed"))
@@ -348,12 +318,9 @@ module RailsEventViewer
       assert_equal 1, attempts
     ensure
       subscriber&.stop!
-      RailsEventViewer.buffer_size = original_buffer_size
-      RailsEventViewer.flush_interval = original_flush_interval
     end
 
     test "a flush commits only the bounded batch it wrote" do
-      original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 2
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
       subscriber = Subscriber.new
@@ -363,13 +330,10 @@ module RailsEventViewer
 
       assert_equal 20, buffer.committed.size
       assert_equal 10, buffer.size
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
     end
 
     test "events dropped from an overfull buffer are committed" do
       RailsEventViewer.async = true
-      original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 2
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
       subscriber = Subscriber.new
@@ -379,15 +343,11 @@ module RailsEventViewer
 
       assert_equal %w[event.0 event.1 event.2 event.3 event.4], buffer.committed.map { |e| e[:name] }
       assert_equal 20, buffer.size
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
     end
 
     test "shutdown gives up instead of looping when a buffer cannot make progress" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::StatementInvalid, "disk full" }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |_| raise ActiveRecord::StatementInvalid, "disk full" }
       subscriber = Subscriber.new
       buffer.push({ name: "order.placed", occurred_at: Time.current })
 
@@ -423,9 +383,7 @@ module RailsEventViewer
 
     test "a failed sync write is logged and reported to Rails instead of swallowed" do
       Rails.event.raise_on_error = false
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::StatementInvalid, "disk full" }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |_| raise ActiveRecord::StatementInvalid, "disk full" }
 
       assert_error_reported(ActiveRecord::StatementInvalid) do
         Rails.event.notify("order.placed", id: 1)
@@ -434,9 +392,7 @@ module RailsEventViewer
 
     test "with raise_on_error, a failed sync write aborts the caller's transaction" do
       Rails.event.raise_on_error = true
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::StatementInvalid, "disk full" }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |_| raise ActiveRecord::StatementInvalid, "disk full" }
 
       assert_raises(ActiveRecord::StatementInvalid) do
         Entry.transaction(requires_new: true) do
@@ -496,19 +452,33 @@ module RailsEventViewer
       user[:id] = 2
 
       entry = buffer.drain(1).first
-      assert_equal({ "items" => { "count" => 1 } }, entry[:payload])
-      assert_equal({ "meta" => { "source" => "web" } }, entry[:tags])
-      assert_equal({ "user" => { "id" => 1 } }, entry[:context])
+      assert_equal({ items: { count: 1 } }, entry[:payload])
+      assert_equal({ meta: { source: "web" } }, entry[:tags])
+      assert_equal({ user: { id: 1 } }, entry[:context])
+      assert_equal 1, entry[:payload][:items][:count]
     ensure
       reporter&.clear_context
       subscriber&.stop!
     end
 
+    test "a payload that cannot be serialized is stored as its inspect output instead of raising" do
+      RailsEventViewer.async = true
+      RailsEventViewer.buffer = buffer = RecordingBuffer.new
+      subscriber = Subscriber.new
+      subscriber.instance_variable_get(:@flusher).define_singleton_method(:ensure_thread!) { }
+      looped = {}
+      looped[:self] = looped
+
+      subscriber.emit(event_hash("order.created").merge(payload: looped))
+
+      assert_equal({ value: looped.inspect }, buffer.drain(1).first[:payload])
+    ensure
+      subscriber&.stop!
+    end
+
     test "the flusher writes inside the Rails executor" do
       executor_active = nil
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| executor_active = Rails.application.executor.active? }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |_| executor_active = Rails.application.executor.active? }
       flusher = Flusher.new(RecordingBuffer.new)
       flusher.define_singleton_method(:ensure_thread!) { }
       flusher.push({ name: "order.created" })
@@ -536,14 +506,9 @@ module RailsEventViewer
     end
 
     test "shutdown stops draining at its deadline and logs what was left" do
-      original_buffer_size = RailsEventViewer.buffer_size
-      original_logger = RailsEventViewer.logger
       RailsEventViewer.buffer_size = 1
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| sleep 0.1 }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      output = capture_log
+      stub_adapter { |_| sleep 0.1 }
       buffer = RecordingBuffer.new
       100.times { |i| buffer.push({ name: "event.#{i}" }) }
       flusher = Flusher.new(buffer)
@@ -557,18 +522,11 @@ module RailsEventViewer
       assert_operator buffer.size, :>, 0
       assert_equal 100, buffer.committed.size + buffer.size
       assert_includes output.string, "[RailsEventViewer] #{buffer.size} events still buffered at shutdown"
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
-      RailsEventViewer.logger = original_logger
     end
 
     test "a clean shutdown writes everything and logs no leftovers" do
-      original_logger = RailsEventViewer.logger
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      output = capture_log
+      stub_adapter { |_| }
       buffer = RecordingBuffer.new
       5.times { |i| buffer.push({ name: "event.#{i}" }) }
 
@@ -576,18 +534,14 @@ module RailsEventViewer
 
       assert_equal 0, buffer.size
       assert_no_match(/still buffered at shutdown/, output.string)
-    ensure
-      RailsEventViewer.logger = original_logger
     end
 
     test "shutdown does not split a failing batch into single writes" do
       calls = 0
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |events|
+      stub_adapter do |events|
         calls += 1
         raise ActiveRecord::StatementInvalid, "flaky" if events.size > 1 || calls > 2
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       buffer = RecordingBuffer.new
       10.times { |i| buffer.push({ name: "event.#{i}" }) }
       flusher = Flusher.new(buffer)
@@ -600,43 +554,32 @@ module RailsEventViewer
     end
 
     test "shutdown warns when the flusher thread is still busy" do
-      original_logger = RailsEventViewer.logger
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
+      output = capture_log
       RailsEventViewer.async = true
       writing = Queue.new
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) do |_|
+      stub_adapter do |_|
         writing << true
         sleep 0.3
       end
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
-      original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 1
       flusher = Flusher.new(RecordingBuffer.new)
       flusher.define_singleton_method(:shutdown_timeout) { 0.05 }
       flusher.push({ name: "event.0" })
-      Timeout.timeout(2) { writing.pop }
       thread = flusher.instance_variable_get(:@thread)
+      Timeout.timeout(2) { writing.pop }
 
       flusher.stop!
 
-      assert_includes output.string, "[RailsEventViewer] Flusher thread still busy after 0.05s"
+      assert_includes output.string, "[RailsEventViewer] Flusher thread still busy after 0.05s writing 1 events"
     ensure
+      flusher&.stop!
       thread&.join(2)
-      RailsEventViewer.buffer_size = original_buffer_size
-      RailsEventViewer.logger = original_logger
     end
 
     test "shutdown reports dropped events" do
-      original_buffer_size = RailsEventViewer.buffer_size
-      original_logger = RailsEventViewer.logger
       RailsEventViewer.buffer_size = 1
-      output = StringIO.new
-      RailsEventViewer.logger = Logger.new(output)
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |_| raise ActiveRecord::ConnectionNotEstablished, "database down" }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      output = capture_log
+      stub_adapter { |_| raise ActiveRecord::ConnectionNotEstablished, "database down" }
       flusher = Flusher.new(RecordingBuffer.new)
       flusher.define_singleton_method(:ensure_thread!) { }
       15.times { |i| flusher.push({ name: "event.#{i}" }) }
@@ -645,12 +588,19 @@ module RailsEventViewer
 
       assert_includes output.string, "[RailsEventViewer] Dropped 5 events because the buffer was full"
       assert_equal 1, output.string.scan("Dropped").size
-    ensure
-      RailsEventViewer.buffer_size = original_buffer_size
-      RailsEventViewer.logger = original_logger
     end
 
     private
+
+    def stub_adapter(&write_events)
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events, &write_events)
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+    end
+
+    def capture_log
+      StringIO.new.tap { |output| RailsEventViewer.logger = Logger.new(output) }
+    end
 
     def in_forked_child_of_a_buffering_parent
       flusher = Flusher.new(Buffers::Memory.new)
@@ -658,9 +608,7 @@ module RailsEventViewer
       flusher.push({ name: "parent.event", occurred_at: Time.current })
 
       reader, writer = IO.pipe
-      adapter = Object.new
-      adapter.define_singleton_method(:write_events) { |events| writer.write(events.map { |e| e[:name] }.join(",")) }
-      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      stub_adapter { |events| writer.write(events.map { |e| e[:name] }.join(",")) }
 
       pid = fork do
         reader.close

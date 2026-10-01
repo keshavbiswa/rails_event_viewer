@@ -82,14 +82,21 @@ module RailsEventViewer
 
       {
         name: event[:name],
-        payload: serialize_payload(event[:payload]).as_json,
-        tags: (event[:tags] || {}).as_json,
-        context: (event[:context] || {}).as_json,
+        payload: snapshot(serialize_payload(event[:payload])),
+        tags: snapshot(event[:tags] || {}),
+        context: snapshot(event[:context] || {}),
         source_file: event.dig(:source_location, :filepath),
         source_line: event.dig(:source_location, :lineno),
         source_label: event.dig(:source_location, :label),
         occurred_at: occurred_at
       }
+    end
+
+    def snapshot(value)
+      json = value.as_json
+      json.is_a?(Hash) ? json.deep_symbolize_keys : json
+    rescue SystemStackError, StandardError
+      { value: value.inspect }
     end
 
     def serialize_payload(payload)
