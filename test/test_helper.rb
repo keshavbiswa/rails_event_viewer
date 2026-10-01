@@ -20,6 +20,7 @@ class ActiveSupport::TestCase
     @original_captured_events = RailsEventViewer.captured_events.dup
     @original_ignored_events = RailsEventViewer.ignored_events.dup
     RailsEventViewer.async = false
+    RailsEventViewer.buffer = RailsEventViewer::Buffers::Memory.new
 
     RailsEventViewer.reset_adapter!
   end

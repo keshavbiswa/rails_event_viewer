@@ -40,6 +40,11 @@ RailsEventViewer.configure do |config|
   # Flush interval in seconds (flushes even if buffer isn't full)
   # config.flush_interval = 2
 
+  # Buffer used when async is true. The default is in memory, so buffered events
+  # are lost if the process is killed. You can write your own buffers (see RailsEventViewer::Buffer)
+  # to persist them, for example in Redis.
+  # config.buffer = MyRedisBuffer.new
+
   # Sample rate: 1.0 = capture all events, 0.1 = capture 10% of events
   # Useful for high-volume production environments
   # config.sample_rate = 1.0
