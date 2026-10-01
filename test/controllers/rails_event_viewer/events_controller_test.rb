@@ -173,5 +173,18 @@ module RailsEventViewer
       assert links.any?
       assert links.all? { |link| link.start_with?(rails_event_viewer.events_path) }, links.inspect
     end
+
+    test "a banner warns when sampling is on" do
+      original_sample_rate = RailsEventViewer.sample_rate
+
+      get rails_event_viewer.events_path
+      assert_no_match(/Sampling is on/, response.body)
+
+      RailsEventViewer.sample_rate = 0.004
+      get rails_event_viewer.events_path
+      assert_match(/Sampling is on: only 0.4% of events are recorded/, response.body)
+    ensure
+      RailsEventViewer.sample_rate = original_sample_rate
+    end
   end
 end

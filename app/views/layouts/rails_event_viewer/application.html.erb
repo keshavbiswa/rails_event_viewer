@@ -33,6 +33,14 @@
           </div>
         <% end %>
 
+        <% if RailsEventViewer.sample_rate.to_f < 1.0 %>
+          <div class="mb-4 rounded-md bg-yellow-50 border border-yellow-200 p-4">
+            <p class="text-sm font-medium text-yellow-800">
+              Sampling is on: only <%= number_to_percentage(RailsEventViewer.sample_rate.to_f * 100, precision: 3, significant: true, strip_insignificant_zeros: true) %> of events are recorded, so timelines can have gaps.
+            </p>
+          </div>
+        <% end %>
+
         <%= yield %>
       </div>
     </main>

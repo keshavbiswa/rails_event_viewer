@@ -3,6 +3,8 @@ require "groupdate"
 
 require "rails_event_viewer/version"
 require "rails_event_viewer/engine"
+require "rails_event_viewer/buffer"
+require "rails_event_viewer/buffers/memory"
 
 module RailsEventViewer
   mattr_accessor :storage_adapter, default: :active_record
@@ -12,6 +14,7 @@ module RailsEventViewer
   mattr_accessor :buffer_size, default: 100 # Flush after N events
   mattr_accessor :flush_interval, default: 2 # Flush every N seconds
   mattr_accessor :sample_rate, default: 1.0 # 1.0 = 100%, 0.1 = 10%
+  mattr_accessor :buffer, default: Buffers::Memory.new
 
   mattr_accessor :retention_period, default: 7.days
   mattr_accessor :captured_events, default: []      # Empty = capture all
@@ -115,6 +118,9 @@ end
 
 require "rails_event_viewer/adapter"
 require "rails_event_viewer/events_relation"
+require "rails_event_viewer/logging"
+require "rails_event_viewer/batch_writer"
+require "rails_event_viewer/flusher"
 require "rails_event_viewer/subscriber"
 require "rails_event_viewer/json_query"
 require "rails_event_viewer/time_utils"

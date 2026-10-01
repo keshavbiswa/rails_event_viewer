@@ -2,6 +2,8 @@
 
 A Rails engine that captures events emitted with `Rails.event` and gives you a dashboard to browse, search, and chart them.
 
+> **Experimental.** This gem is in early development and not recommended for production yet. APIs, the database schema, and behavior may change between minor versions.
+
 ## Requirements
 
 - Rails 8.1+
@@ -65,6 +67,11 @@ With `async`, events are written by a background thread, never by your web reque
 
 Internal Rails events such as `active_record.*` and `action_controller.*` are ignored by default. Remove a pattern from `ignored_events` to capture it.
 
+## Sync vs async
+
+- With `async = false`, each event is written inside your transaction, and a failed write is reported to `Rails.error`. In development and test, where Rails sets `raise_on_error`, it raises instead.
+- With `async = true`, events wait in an in-memory buffer and are lost if the process is killed. Set `config.buffer` to your own `RailsEventViewer::Buffer`, for example backed by Redis, to keep them.
+
 ## Authentication
 
 Without authentication, the dashboard is open in development and test, and returns `403` everywhere else.
@@ -85,27 +92,9 @@ Set `RAILS_ENV` on every server. Without it, Rails falls back to development and
 
 ## Storage adapters
 
-| Adapter | Use it for |
-|---|---|
-| `:active_record` | The default. Stores events in your database, with full analytics. |
-| `:redis` | High volume, short-lived storage. Keeps the newest `max_events`. |
-| `:memory` | Development and tests. Lost on restart. |
-| `:null` | Disables storage. |
+Set `config.storage_adapter` to `:active_record` (default), `:redis`, `:memory`, or `:null`. Redis needs the `redis` gem and takes options through `config.adapter_options`.
 
-Redis needs the `redis` gem:
-
-```ruby
-config.storage_adapter = :redis
-config.adapter_options = {
-  redis_options: { url: ENV["REDIS_URL"] },
-  pool_size: 5,
-  max_events: 10_000
-}
-```
-
-Filtered queries on Redis scan every stored event, so keep `max_events` modest.
-
-For a custom adapter, include `RailsEventViewer::Adapter` and implement the methods it lists.
+Filtered queries on Redis scan every stored event, so keep `max_events` (how many events Redis keeps, set in `adapter_options`) modest. For your own storage, include `RailsEventViewer::Adapter`.
 
 ## Rake tasks
 

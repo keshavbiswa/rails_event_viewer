@@ -96,10 +96,6 @@ module RailsEventViewer
       assert_equal "user.created", Entry.last.name
     end
 
-    test "tracks PID for fork detection" do
-      assert_equal Process.pid, @subscriber.instance_variable_get(:@pid)
-    end
-
     test "buffer_size returns current buffer size" do
       # In sync mode, buffer stays empty
       @subscriber.emit(event_hash("sync.event"))
@@ -207,7 +203,7 @@ module RailsEventViewer
 
       subscriber = Subscriber.new
       subscriber.emit(event_hash("full.1"))
-      flusher = subscriber.instance_variable_get(:@flusher_thread)
+      flusher = subscriber.instance_variable_get(:@flusher).instance_variable_get(:@thread)
       subscriber.emit(event_hash("full.2"))
 
       writer = Timeout.timeout(2) { writers.pop }
@@ -254,7 +250,7 @@ module RailsEventViewer
       RailsEventViewer.instance_variable_set(:@adapter, adapter)
 
       subscriber = Subscriber.new
-      subscriber.define_singleton_method(:ensure_flusher_thread!) { }
+      subscriber.instance_variable_get(:@flusher).define_singleton_method(:ensure_thread!) { }
       25.times { |i| subscriber.emit(event_hash("event.#{i}")) }
 
       assert_equal 20, subscriber.buffer_size
@@ -271,11 +267,17 @@ module RailsEventViewer
     test "a single flush is bounded by the buffer cap" do
       original_buffer_size = RailsEventViewer.buffer_size
       RailsEventViewer.buffer_size = 2
+      written = []
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |events| written << events.size }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
       subscriber = Subscriber.new
-      buffer = subscriber.instance_variable_get(:@buffer)
-      30.times { |i| buffer << { name: "event.#{i}" } }
+      buffer = RailsEventViewer.buffer
+      30.times { |i| buffer.push({ name: "event.#{i}" }) }
 
-      assert_equal 20, subscriber.send(:drain_buffer).size
+      subscriber.flush!
+
+      assert_equal [20], written
       assert_equal 10, subscriber.buffer_size
     ensure
       RailsEventViewer.buffer_size = original_buffer_size

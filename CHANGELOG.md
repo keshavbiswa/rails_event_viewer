@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 (2026-10-01)
+
+- Pluggable buffers: `config.buffer` accepts any object implementing `RailsEventViewer::Buffer` (`push`, `drain`, `commit`, `revert`, `dead`, `size`, `after_fork`). `push` returns the new size. The in-memory buffer remains the default.
+- A failed batch is reverted and retried with exponential backoff. After three failures it is written one event at a time.
+- Events the adapter keeps rejecting, and events dropped by the buffer cap, are passed to `dead` instead of being lost silently.
+- A failed sync write, or a failed `push` to the buffer in async mode, is now logged and re-raised to `Rails.event`, which reports it to `Rails.error` (or raises, with `raise_on_error`), instead of being swallowed.
+- A banner warns when `sample_rate` is below 1.0, since timelines can have gaps.
+- README now marks the gem as experimental and not yet recommended for production.
+
 ## 0.1.3 (2026-10-01)
 
 - The flusher thread starts on the first buffered event, not at boot, so consoles and rake tasks no longer run an idle thread.
