@@ -28,6 +28,8 @@ module RailsEventViewer
     end
 
     def flush!
+      handle_fork_if_needed
+
       events = @buffer.drain([@buffer.size, max_buffer_size].min)
       return true if events.empty?
 
@@ -40,6 +42,7 @@ module RailsEventViewer
     end
 
     def stop!
+      handle_fork_if_needed
       @mutex.synchronize { @shutdown_requested = true }
 
       if @thread&.alive?

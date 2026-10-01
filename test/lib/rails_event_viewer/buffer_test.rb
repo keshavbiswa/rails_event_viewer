@@ -458,7 +458,55 @@ module RailsEventViewer
       assert_equal 0, Entry.count
     end
 
+    test "a forked child that never emits does not write the parent's buffered events on shutdown" do
+      skip "fork is not available" unless Process.respond_to?(:fork)
+
+      written_by_child = in_forked_child_of_a_buffering_parent do |flusher|
+        flusher.stop!
+        flusher.send(:shutdown_requested?)
+      end
+
+      assert_equal "", written_by_child
+    end
+
+    test "a forked child that never emits does not write the parent's buffered events on flush" do
+      skip "fork is not available" unless Process.respond_to?(:fork)
+
+      written_by_child = in_forked_child_of_a_buffering_parent do |flusher|
+        flusher.flush!
+      end
+
+      assert_equal "", written_by_child
+    end
+
     private
+
+    def in_forked_child_of_a_buffering_parent
+      flusher = Flusher.new(Buffers::Memory.new)
+      flusher.define_singleton_method(:ensure_thread!) { }
+      flusher.push({ name: "parent.event", occurred_at: Time.current })
+
+      reader, writer = IO.pipe
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |events| writer.write(events.map { |e| e[:name] }.join(",")) }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+
+      pid = fork do
+        reader.close
+        succeeded = yield(flusher)
+        writer.close
+        exit!(succeeded ? 0 : 1)
+      rescue Exception
+        exit!(1)
+      end
+      writer.close
+      written = reader.read
+      reader.close
+      Process.wait(pid)
+
+      assert Process.last_status.success?, "the forked child failed"
+      written
+    end
 
     def event_hash(name)
       { name: name, payload: {}, timestamp: (Time.current.to_f * 1_000_000_000).to_i }
