@@ -35,7 +35,7 @@ module RailsEventViewer
         events = @buffer.drain([@buffer.size, max_buffer_size].min)
         next true if events.empty?
 
-        written = @writer.write(events)
+        written = @writer.write(events, split: !shutdown_requested?)
         report_dropped_events if written
         written
       end
@@ -46,11 +46,13 @@ module RailsEventViewer
 
     def stop!
       handle_fork_if_needed
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + shutdown_timeout
       @mutex.synchronize { @shutdown_requested = true }
 
       if @thread&.alive?
         @flush_requests << true
-        @thread.join(SHUTDOWN_TIMEOUT_SECONDS)
+        @thread.join(shutdown_timeout)
+        effective_logger&.warn("[RailsEventViewer] Flusher thread still busy after #{shutdown_timeout}s") if @thread.alive?
       end
 
       @mutex.synchronize { @thread = nil }
@@ -58,10 +60,14 @@ module RailsEventViewer
       loop do
         remaining = @buffer.size
         break if remaining.zero?
+        break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
         flush!
         break if @buffer.size >= remaining
       end
+
+      leftover = @buffer.size
+      effective_logger&.warn("[RailsEventViewer] #{leftover} events still buffered at shutdown") if leftover.positive?
     end
 
     def running?
@@ -86,6 +92,10 @@ module RailsEventViewer
           @dropped_count = 0
         end
       end
+    end
+
+    def shutdown_timeout
+      SHUTDOWN_TIMEOUT_SECONDS
     end
 
     def max_buffer_size

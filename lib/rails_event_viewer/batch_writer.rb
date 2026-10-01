@@ -17,7 +17,7 @@ module RailsEventViewer
       @strikes = Hash.new(0)
     end
 
-    def write(events)
+    def write(events, split: true)
       RailsEventViewer.adapter.write_events(events)
       @buffer.commit(events)
       forget(events)
@@ -26,7 +26,7 @@ module RailsEventViewer
     rescue => e
       log_error("[RailsEventViewer] Failed to write #{events.size} events: #{e.message}")
       @failed_attempts += 1
-      return write_individually(events) if @failed_attempts >= MAX_ATTEMPTS
+      return write_individually(events) if split && @failed_attempts >= MAX_ATTEMPTS
 
       @buffer.revert(events)
       false

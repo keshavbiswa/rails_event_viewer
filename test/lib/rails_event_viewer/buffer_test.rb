@@ -535,6 +535,99 @@ module RailsEventViewer
       executor&.singleton_class&.remove_method(:run!)
     end
 
+    test "shutdown stops draining at its deadline and logs what was left" do
+      original_buffer_size = RailsEventViewer.buffer_size
+      original_logger = RailsEventViewer.logger
+      RailsEventViewer.buffer_size = 1
+      output = StringIO.new
+      RailsEventViewer.logger = Logger.new(output)
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |_| sleep 0.1 }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      buffer = RecordingBuffer.new
+      100.times { |i| buffer.push({ name: "event.#{i}" }) }
+      flusher = Flusher.new(buffer)
+      flusher.define_singleton_method(:shutdown_timeout) { 0.25 }
+
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      flusher.stop!
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      assert_operator elapsed, :<, 0.6
+      assert_operator buffer.size, :>, 0
+      assert_equal 100, buffer.committed.size + buffer.size
+      assert_includes output.string, "[RailsEventViewer] #{buffer.size} events still buffered at shutdown"
+    ensure
+      RailsEventViewer.buffer_size = original_buffer_size
+      RailsEventViewer.logger = original_logger
+    end
+
+    test "a clean shutdown writes everything and logs no leftovers" do
+      original_logger = RailsEventViewer.logger
+      output = StringIO.new
+      RailsEventViewer.logger = Logger.new(output)
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |_| }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      buffer = RecordingBuffer.new
+      5.times { |i| buffer.push({ name: "event.#{i}" }) }
+
+      Flusher.new(buffer).stop!
+
+      assert_equal 0, buffer.size
+      assert_no_match(/still buffered at shutdown/, output.string)
+    ensure
+      RailsEventViewer.logger = original_logger
+    end
+
+    test "shutdown does not split a failing batch into single writes" do
+      calls = 0
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) do |events|
+        calls += 1
+        raise ActiveRecord::StatementInvalid, "flaky" if events.size > 1 || calls > 2
+      end
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      buffer = RecordingBuffer.new
+      10.times { |i| buffer.push({ name: "event.#{i}" }) }
+      flusher = Flusher.new(buffer)
+      flusher.instance_variable_get(:@writer).instance_variable_set(:@failed_attempts, BatchWriter::MAX_ATTEMPTS - 1)
+
+      flusher.stop!
+
+      assert_equal 1, calls
+      assert_equal 10, buffer.size
+    end
+
+    test "shutdown warns when the flusher thread is still busy" do
+      original_logger = RailsEventViewer.logger
+      output = StringIO.new
+      RailsEventViewer.logger = Logger.new(output)
+      RailsEventViewer.async = true
+      writing = Queue.new
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) do |_|
+        writing << true
+        sleep 0.3
+      end
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      original_buffer_size = RailsEventViewer.buffer_size
+      RailsEventViewer.buffer_size = 1
+      flusher = Flusher.new(RecordingBuffer.new)
+      flusher.define_singleton_method(:shutdown_timeout) { 0.05 }
+      flusher.push({ name: "event.0" })
+      Timeout.timeout(2) { writing.pop }
+      thread = flusher.instance_variable_get(:@thread)
+
+      flusher.stop!
+
+      assert_includes output.string, "[RailsEventViewer] Flusher thread still busy after 0.05s"
+    ensure
+      thread&.join(2)
+      RailsEventViewer.buffer_size = original_buffer_size
+      RailsEventViewer.logger = original_logger
+    end
+
     private
 
     def in_forked_child_of_a_buffering_parent
