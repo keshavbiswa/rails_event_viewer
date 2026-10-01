@@ -3,8 +3,8 @@
 ## 0.2.1 (2026-10-01)
 
 - Forked workers no longer duplicate the parent's buffered events on exit.
-- Payload, tags and context are snapshotted with `as_json` at emit time
-- keys are now strings and values are JSON types (e.g. `Time` becomes a string).
+- Payload, tags and context are snapshotted with `as_json` at emit time.
+- Keys are now strings and values are JSON types (e.g. `Time` becomes a string).
 - The flusher writes inside the Rails executor.
 - Shutdown has a deadline and logs buffered and dropped events.
 
