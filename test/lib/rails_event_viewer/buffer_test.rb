@@ -479,6 +479,31 @@ module RailsEventViewer
       assert_equal "", written_by_child
     end
 
+    test "a buffered event keeps its payload, tags and context as they were at emit time" do
+      RailsEventViewer.async = true
+      RailsEventViewer.buffer = buffer = RecordingBuffer.new
+      subscriber = Subscriber.new
+      subscriber.instance_variable_get(:@flusher).define_singleton_method(:ensure_thread!) { }
+      reporter = ActiveSupport::EventReporter.new(subscriber)
+      items = { count: 1 }
+      meta = { source: "web" }
+      user = { id: 1 }
+
+      reporter.set_context(user: user)
+      reporter.tagged(meta: meta) { reporter.notify("order.created", items: items) }
+      items[:count] = 2
+      meta[:source] = "api"
+      user[:id] = 2
+
+      entry = buffer.drain(1).first
+      assert_equal({ "items" => { "count" => 1 } }, entry[:payload])
+      assert_equal({ "meta" => { "source" => "web" } }, entry[:tags])
+      assert_equal({ "user" => { "id" => 1 } }, entry[:context])
+    ensure
+      reporter&.clear_context
+      subscriber&.stop!
+    end
+
     private
 
     def in_forked_child_of_a_buffering_parent
