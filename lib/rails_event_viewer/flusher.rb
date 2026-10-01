@@ -29,13 +29,16 @@ module RailsEventViewer
 
     def flush!
       handle_fork_if_needed
+      return true if @buffer.size.zero?
 
-      events = @buffer.drain([@buffer.size, max_buffer_size].min)
-      return true if events.empty?
+      Rails.application.executor.wrap do
+        events = @buffer.drain([@buffer.size, max_buffer_size].min)
+        next true if events.empty?
 
-      written = @writer.write(events)
-      report_dropped_events if written
-      written
+        written = @writer.write(events)
+        report_dropped_events if written
+        written
+      end
     rescue => e
       log_error("[RailsEventViewer] Failed to flush: #{e.message}")
       false

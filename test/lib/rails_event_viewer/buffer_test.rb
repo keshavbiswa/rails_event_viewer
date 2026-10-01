@@ -504,6 +504,37 @@ module RailsEventViewer
       subscriber&.stop!
     end
 
+    test "the flusher writes inside the Rails executor" do
+      executor_active = nil
+      adapter = Object.new
+      adapter.define_singleton_method(:write_events) { |_| executor_active = Rails.application.executor.active? }
+      RailsEventViewer.instance_variable_set(:@adapter, adapter)
+      flusher = Flusher.new(RecordingBuffer.new)
+      flusher.define_singleton_method(:ensure_thread!) { }
+      flusher.push({ name: "order.created" })
+
+      Thread.new { flusher.flush! }.join
+
+      assert_equal true, executor_active
+    end
+
+    test "a failing executor hook leaves the events in the buffer" do
+      buffer = RecordingBuffer.new
+      flusher = Flusher.new(buffer)
+      flusher.define_singleton_method(:ensure_thread!) { }
+      flusher.push({ name: "order.created" })
+
+      executor = Rails.application.executor
+      executor.define_singleton_method(:run!) { |**| raise "hook failed" }
+
+      flushed = Thread.new { flusher.flush! }.value
+
+      assert_equal false, flushed
+      assert_equal 1, buffer.size
+    ensure
+      executor&.singleton_class&.remove_method(:run!)
+    end
+
     private
 
     def in_forked_child_of_a_buffering_parent
