@@ -4,16 +4,16 @@ module RailsEventViewer
   class Subscriber
     NANOSECONDS_PER_SECOND = 1_000_000_000.0
     SHUTDOWN_TIMEOUT_SECONDS = 5
-    ACTION_CABLE_CHANNEL = "rails_event_viewer:events"
+    MAX_BUFFER_MULTIPLIER = 10
 
     def initialize
       @buffer = Queue.new
+      @flush_requests = Queue.new
       @mutex = Mutex.new
       @flusher_thread = nil
       @shutdown_requested = false
+      @dropped_count = 0
       @pid = Process.pid
-
-      ensure_flusher_thread!
     end
 
     def emit(event)
@@ -41,7 +41,7 @@ module RailsEventViewer
       return if events_to_write.empty?
 
       write_immediately(events_to_write)
-      broadcast_events(events_to_write)
+      report_dropped_events
     end
 
     def stop!
@@ -50,7 +50,7 @@ module RailsEventViewer
       end
 
       if @flusher_thread&.alive?
-        @flusher_thread.wakeup rescue nil
+        @flush_requests << true
         @flusher_thread.join(SHUTDOWN_TIMEOUT_SECONDS)
       end
 
@@ -58,7 +58,7 @@ module RailsEventViewer
         @flusher_thread = nil
       end
 
-      flush!
+      flush! until @buffer.empty?
     end
 
     def running?
@@ -77,25 +77,56 @@ module RailsEventViewer
         if @pid != Process.pid
           @pid = Process.pid
           @buffer = Queue.new
+          @flush_requests = Queue.new
           @flusher_thread = nil
           @shutdown_requested = false
+          @dropped_count = 0
         end
       end
-      ensure_flusher_thread!
     end
 
     def drain_buffer
       events = []
-      loop { events << @buffer.pop(true) }
+      [@buffer.size, max_buffer_size].min.times { events << @buffer.pop(true) }
+      events
     rescue ThreadError
       events
     end
 
     def buffer_event(entry)
       @buffer << entry
-      ensure_flusher_thread!
+      return flush! if shutdown_requested?
 
-      flush! if @buffer.size >= RailsEventViewer.buffer_size
+      ensure_flusher_thread!
+      drop_oldest_events if @buffer.size > max_buffer_size
+      request_flush if @buffer.size >= RailsEventViewer.buffer_size
+    end
+
+    def max_buffer_size
+      RailsEventViewer.buffer_size * MAX_BUFFER_MULTIPLIER
+    end
+
+    def drop_oldest_events
+      dropped = 0
+      while @buffer.size > max_buffer_size
+        @buffer.pop(true)
+        dropped += 1
+      end
+    rescue ThreadError
+      nil
+    ensure
+      @mutex.synchronize { @dropped_count += dropped } if dropped.positive?
+    end
+
+    def report_dropped_events
+      dropped = @mutex.synchronize { @dropped_count.tap { @dropped_count = 0 } }
+      return if dropped.zero?
+
+      effective_logger&.warn("[RailsEventViewer] Dropped #{dropped} events because the buffer was full")
+    end
+
+    def request_flush
+      @flush_requests << true if @flush_requests.empty?
     end
 
     def ensure_flusher_thread!
@@ -110,18 +141,21 @@ module RailsEventViewer
     end
 
     def run_flusher_loop
-      log_info("[RailsEventViewer] Flusher thread started (PID: #{Process.pid})")
+      effective_logger&.debug("[RailsEventViewer] Flusher thread started (PID: #{Process.pid})")
 
       until shutdown_requested?
         begin
-          sleep(RailsEventViewer.flush_interval)
-          flush! unless @buffer.empty?
+          @flush_requests.pop(timeout: RailsEventViewer.flush_interval)
+          loop do
+            flush!
+            break if @buffer.size < RailsEventViewer.buffer_size || shutdown_requested?
+          end
         rescue => e
           log_error("[RailsEventViewer] Flusher error: #{e.message}")
         end
       end
 
-      log_info("[RailsEventViewer] Flusher thread stopped (PID: #{Process.pid})")
+      effective_logger&.debug("[RailsEventViewer] Flusher thread stopped (PID: #{Process.pid})")
     end
 
     def shutdown_requested?
@@ -134,22 +168,6 @@ module RailsEventViewer
       RailsEventViewer.adapter.write_events(events)
     rescue => e
       log_error("[RailsEventViewer] Failed to write #{events.size} events: #{e.message}")
-    end
-
-    def broadcast_events(events)
-      return unless defined?(ActionCable)
-      return unless events.any?
-
-      ActionCable.server.broadcast(
-        ACTION_CABLE_CHANNEL,
-        {
-          action: "new_events",
-          count: events.size,
-          events: events.map { |e| { name: e[:name], occurred_at: e[:occurred_at]&.iso8601 } }
-        }
-      )
-    rescue => e
-      log_error("[RailsEventViewer] Broadcast error: #{e.message}")
     end
 
     def should_capture?(event)
@@ -232,10 +250,6 @@ module RailsEventViewer
 
     def handle_error(error, event)
       log_error("[RailsEventViewer] Failed to capture event '#{event[:name]}': #{error.message}")
-    end
-
-    def log_info(message)
-      effective_logger&.info(message)
     end
 
     def log_error(message)
