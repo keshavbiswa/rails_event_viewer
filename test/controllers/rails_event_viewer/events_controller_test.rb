@@ -137,6 +137,23 @@ module RailsEventViewer
       assert_equal [@event.id], controller.instance_variable_get(:@events).map(&:id)
     end
 
+    test "index filters by a numeric context value typed as text" do
+      numeric = Entry.create!(name: "order.placed", context: { order_id: 42 }, occurred_at: Time.current)
+
+      get rails_event_viewer.events_path(context_key: "order_id", context_value: "42")
+
+      assert_equal [numeric.id], controller.instance_variable_get(:@events).map(&:id)
+    end
+
+    test "index does not raise on tag and context keys that are not valid JSON paths" do
+      ["[", "trace-id", "a b"].each do |key|
+        get rails_event_viewer.events_path(tag_key: key, context_key: key, context_value: "x")
+
+        assert_response :success
+        assert_empty controller.instance_variable_get(:@events)
+      end
+    end
+
     test "index paginates with page param and clamps out of range pages" do
       29.times { |i| Entry.create!(name: "bulk.#{i}", occurred_at: i.minutes.ago) }
 

@@ -275,6 +275,25 @@ module RailsEventViewer
         assert_equal 2, instances.size
       end
 
+      test "group_instances merges a number with its string form and skips blank and null values" do
+        Entry.create!(name: "a", context: { "user_id" => 42 }, occurred_at: Time.current)
+        Entry.create!(name: "b", context: { "user_id" => "42" }, occurred_at: Time.current)
+        Entry.create!(name: "c", context: { "user_id" => "" }, occurred_at: Time.current)
+        Entry.create!(name: "d", context: { "user_id" => nil }, occurred_at: Time.current)
+
+        instances = @adapter.group_instances("user_id", source: :context)
+
+        assert_equal [["42", 2]], instances.map { |instance| [instance[:value], instance[:count]] }
+      end
+
+      test "group_instances works for a key with a hyphen" do
+        Entry.create!(name: "a", context: { "trace-id" => "t1" }, occurred_at: Time.current)
+
+        instances = @adapter.group_instances("trace-id", source: :context)
+
+        assert_equal [["t1", 1]], instances.map { |instance| [instance[:value], instance[:count]] }
+      end
+
       test "event_time_span returns min and max occurred_at for filtered events" do
         Entry.create!(name: "test", context: { "request_id" => "req-1" }, occurred_at: 2.hours.ago)
         Entry.create!(name: "test", context: { "request_id" => "req-1" }, occurred_at: 30.minutes.ago)

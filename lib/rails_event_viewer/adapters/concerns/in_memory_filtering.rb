@@ -15,8 +15,8 @@ module RailsEventViewer
 
         def group_instances(key, source: :context, limit: 100)
           in_memory_events
-            .group_by { |e| group_value_for(e, key, source) }
-            .reject { |value, _| value.nil? }
+            .group_by { |e| group_value_for(e, key, source).to_s }
+            .reject { |value, _| value.empty? }
             .map { |value, events| build_group_instance(value, events) }
             .sort_by { |s| -(s[:last_event_at]&.to_f || 0) }
             .take(limit)
@@ -96,7 +96,7 @@ module RailsEventViewer
         def values_match?(actual, expected)
           return false if actual.nil?
 
-          actual == expected || actual.to_s == expected.to_s
+          actual.to_s == expected.to_s
         end
 
         def filter_by_time_range(events, since_time, until_time)
