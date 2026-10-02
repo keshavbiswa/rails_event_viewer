@@ -218,5 +218,31 @@ module RailsEventViewer
       assert_equal "alice@example.com", controller.instance_variable_get(:@value)
       assert_equal 1, controller.instance_variable_get(:@total_count)
     end
+
+    test "a numeric group opens with the count the index shows" do
+      RailsEventViewer.group_keys = [:user_id]
+      2.times { Entry.create!(name: "order.placed", context: { user_id: 42 }, occurred_at: Time.current) }
+      Entry.create!(name: "order.placed", context: { user_id: "42" }, occurred_at: Time.current)
+
+      get rails_event_viewer.groups_path
+      groups = controller.instance_variable_get(:@groups)
+
+      assert_equal [["42", 3]], groups.map { |group| [group[:value], group[:count]] }
+
+      get rails_event_viewer.group_path("42", key: "user_id")
+
+      assert_response :success
+      assert_equal 3, controller.instance_variable_get(:@total_count)
+    end
+
+    test "show does not raise on a key that is not a valid JSON path" do
+      Entry.create!(name: "order.placed", context: { user_id: 42 }, occurred_at: Time.current)
+
+      ["[", "trace-id", "a b"].each do |key|
+        get rails_event_viewer.group_path("42", key: key)
+
+        assert_response :success
+      end
+    end
   end
 end

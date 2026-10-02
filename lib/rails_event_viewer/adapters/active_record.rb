@@ -104,12 +104,9 @@ module RailsEventViewer
         json_path = JsonQuery.extract_path(column, key)
 
         Entry
-          .where(JsonQuery.extract_path_not_null(column, key))
+          .where(JsonQuery.extract_path_present(column, key))
           .distinct
           .pluck(Arel.sql(json_path))
-          .compact
-          .map { |v| v.is_a?(String) ? v.gsub(/^"|"$/, "") : v.to_s }
-          .uniq
       end
 
       def group_instances(key, source: :context, limit: 100)
@@ -123,13 +120,13 @@ module RailsEventViewer
             Arel.sql("MIN(occurred_at) as first_event_at"),
             Arel.sql("MAX(occurred_at) as last_event_at")
           )
-          .where(JsonQuery.extract_path_not_null(column, key))
+          .where(JsonQuery.extract_path_present(column, key))
           .group(Arel.sql(json_path))
           .order(Arel.sql("MAX(occurred_at) DESC"))
           .limit(limit)
           .map do |row|
             {
-              value: normalize_group_value(row.group_value),
+              value: row.group_value,
               count: row.event_count,
               first_event_at: parse_timestamp(row.first_event_at),
               last_event_at: parse_timestamp(row.last_event_at)
@@ -159,13 +156,6 @@ module RailsEventViewer
         ActiveSupport::TimeZone["UTC"].parse(value.to_s)
       rescue ArgumentError
         nil
-      end
-
-      def normalize_group_value(value)
-        return nil if value.nil?
-        return value.to_s if value.is_a?(Numeric)
-
-        value.to_s.gsub(/^"|"$/, "")
       end
 
       def build_scope(relation)

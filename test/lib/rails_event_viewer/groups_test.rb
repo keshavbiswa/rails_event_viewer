@@ -123,6 +123,19 @@ module RailsEventViewer
       assert_equal 5, stats.first[:count]
     end
 
+    test "group_instances merges a number with its string form and skips blank and null values" do
+      @adapter.write_events([
+        { name: "a", context: { order_id: 42 }, occurred_at: Time.current },
+        { name: "b", context: { order_id: "42" }, occurred_at: Time.current },
+        { name: "c", context: { order_id: "" }, occurred_at: Time.current },
+        { name: "d", context: { order_id: nil }, occurred_at: Time.current }
+      ])
+
+      stats = @adapter.group_instances("order_id", source: :context)
+
+      assert_equal [["42", 2]], stats.map { |stat| [stat[:value], stat[:count]] }
+    end
+
     test "EventsRelation contexts are cloned properly" do
       relation = EventsRelation.new(adapter: @adapter)
       original = relation.with_context("request_id", "req-123")

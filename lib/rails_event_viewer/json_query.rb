@@ -1,23 +1,34 @@
 module RailsEventViewer
   module JsonQuery
-    INTEGER_PATTERN = /\A-?\d+\z/ # Matches: "123", "-456", "0"
-    FLOAT_PATTERN = /\A-?\d+\.?\d*\z/ # Matches: "123.45", "-0.5", "123"
     SAFE_KEY_PATTERN = /\A[\w.-]+\z/
 
     module_function
 
     def contains(column, key, value = nil)
-      adapter = detect_adapter
+      return exists(column, key) if value.nil?
 
-      case adapter
+      adapter = detect_adapter
+      return fallback_contains(column, key, value) if adapter == :fallback
+
+      condition = "#{text_at(column, ':path')} = :value"
+      binds = { path: path_for(key), value: value.to_s }
+      return [condition, binds] unless adapter == :postgresql
+
+      variants = { as_string: value.to_s, as_scalar: parse_scalar(value) }.compact
+      prefilter = variants.keys.map { |name| "#{column} @> :#{name}" }.join(" OR ")
+      ["(#{prefilter}) AND #{condition}", binds.merge(variants.transform_values { |variant| { key.to_s => variant }.to_json })]
+    end
+
+    def exists(column, key)
+      case detect_adapter
       when :postgresql
-        postgresql_contains(column, key, value)
+        ["#{column} ? :key", { key: key.to_s }]
       when :mysql
-        mysql_contains(column, key, value)
+        ["JSON_CONTAINS_PATH(#{column}, 'one', ?)", quoted_path(key)]
       when :sqlite
-        sqlite_contains(column, key, value)
+        ["json_type(#{column}, ?) IS NOT NULL", quoted_path(key)]
       else
-        fallback_contains(column, key, value)
+        fallback_contains(column, key)
       end
     end
 
@@ -36,76 +47,57 @@ module RailsEventViewer
       end
     end
 
-    # PostgreSQL: Uses @> operator for "contains"
-    # Example: tags @> '{"env": "production"}'
-    def postgresql_contains(column, key, value = nil)
-      if value.present?
-        ["#{column} @> ?", { key.to_s => value }.to_json]
-      else
-        ["#{column} ? :key", { key: key.to_s }]
-      end
-    end
-
-    def mysql_contains(column, key, value = nil)
-      if value.present?
-        ["JSON_CONTAINS(#{column}, ?, ?)", value.to_json, "$.#{key}"]
-      else
-        ["JSON_CONTAINS_PATH(#{column}, 'one', ?)", "$.#{key}"]
-      end
-    end
-
-    def sqlite_contains(column, key, value = nil)
-      if value.present?
-        # SQLite stores JSON values with their original types (integers stay integers)
-        # We need to cast the value appropriately for comparison
-        normalized_value = normalize_sqlite_value(value)
-        ["json_extract(#{column}, ?) = ?", "$.#{key}", normalized_value]
-      else
-        ["json_extract(#{column}, ?) IS NOT NULL", "$.#{key}"]
-      end
-    end
-
-    def normalize_sqlite_value(value)
-      return value unless value.is_a?(String)
-
-      if value.match?(INTEGER_PATTERN)
-        value.to_i
-      elsif value.match?(FLOAT_PATTERN)
-        value.to_f
-      else
-        value
-      end
-    end
-
     def fallback_contains(column, key, value = nil)
-      if value.present?
-        escaped_key = key.to_s.gsub(/[%_\\]/) { |m| "\\#{m}" }
-        ["CAST(#{column} AS TEXT) LIKE ?", "%\"#{escaped_key}\":#{value.to_json}%"]
-      else
-        escaped_key = key.to_s.gsub(/[%_\\]/) { |m| "\\#{m}" }
+      escaped_key = key.to_s.gsub(/[%_\\]/) { |m| "\\#{m}" }
+
+      if value.nil?
         ["CAST(#{column} AS TEXT) LIKE ?", "%\"#{escaped_key}\"%"]
+      else
+        ["CAST(#{column} AS TEXT) LIKE ?", "%\"#{escaped_key}\":#{value.to_json}%"]
       end
     end
 
     def extract_path(column, key)
       raise ArgumentError, "Invalid JSON key: #{key.inspect}" unless key.to_s.match?(SAFE_KEY_PATTERN)
 
-      adapter = detect_adapter
+      text_at(column, "'#{path_for(key)}'")
+    end
 
-      case adapter
+    def extract_path_present(column, key)
+      path = extract_path(column, key)
+      "#{path} IS NOT NULL AND #{path} <> ''"
+    end
+
+    def text_at(column, path)
+      case detect_adapter
       when :postgresql
-        "#{column} ->> '#{key}'"
+        "#{column} ->> #{path}"
       when :mysql
-        "JSON_UNQUOTE(JSON_EXTRACT(#{column}, '$.#{key}'))"
-      when :sqlite
-        "json_extract(#{column}, '$.#{key}')"
+        "JSON_UNQUOTE(NULLIF(JSON_EXTRACT(#{column}, #{path}), CAST('null' AS JSON))) COLLATE #{mysql_collation}"
       else
-        "json_extract(#{column}, '$.#{key}')"
+        "CASE json_type(#{column}, #{path}) WHEN 'true' THEN 'true' WHEN 'false' THEN 'false' " \
+          "ELSE CAST(json_extract(#{column}, #{path}) AS TEXT) END"
       end
     end
 
-    def extract_path_not_null(column, key)
-      "#{extract_path(column, key)} IS NOT NULL"
+    def mysql_collation
+      connection = ActiveRecord::Base.connection
+      !connection.mariadb? && connection.database_version >= "8.0.17" ? "utf8mb4_0900_bin" : "utf8mb4_bin"
+    end
+
+    def path_for(key)
+      detect_adapter == :postgresql ? key.to_s : quoted_path(key)
+    end
+
+    def quoted_path(key)
+      %($."#{key.to_s.gsub(/["\\]/) { |m| "\\#{m}" }}")
+    end
+
+    def parse_scalar(value)
+      parsed = JSON.parse(value.to_s)
+      parsed if parsed.is_a?(Numeric) || parsed == true || parsed == false
+    rescue JSON::ParserError
+      nil
     end
   end
 end
