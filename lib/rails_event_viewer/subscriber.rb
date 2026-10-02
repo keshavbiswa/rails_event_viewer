@@ -93,8 +93,7 @@ module RailsEventViewer
     end
 
     def snapshot(value)
-      json = value.as_json
-      json.is_a?(Hash) ? json.deep_symbolize_keys : json
+      JSON.parse(JSON.generate(value.as_json), symbolize_names: true)
     rescue SystemStackError, StandardError
       { value: value.inspect }
     end

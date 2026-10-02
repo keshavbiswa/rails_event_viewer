@@ -1,4 +1,5 @@
 require "test_helper"
+require "rails_event_viewer/adapters/active_record"
 
 module RailsEventViewer
   class BufferTest < ActiveSupport::TestCase
@@ -126,14 +127,9 @@ module RailsEventViewer
 
     test "after three failed attempts, a batch is written one event at a time and the rejected event is kept" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
-      written = []
-      stub_adapter do |events|
-        raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
-
-        written.concat(events)
-      end
+      written = stub_adapter_rejecting_unwritable
       subscriber = Subscriber.new
-      %w[good.1 poison good.2].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
+      %w[good.1 unwritable good.2].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
 
       assert_not subscriber.flush!
       assert_not subscriber.flush!
@@ -146,24 +142,22 @@ module RailsEventViewer
       buffer.push({ name: "good.3", occurred_at: Time.current })
       assert subscriber.flush!, "with a rejected event still waiting, the next failure splits right away"
       assert_equal %w[good.1 good.2 good.3], buffer.committed.map { |e| e[:name] }
-      assert_equal %w[poison], buffer.drain(5).map { |e| e[:name] }
+      assert_equal %w[unwritable], buffer.drain(5).map { |e| e[:name] }
     end
 
     test "an event is dropped only after it is rejected on its own three times" do
       RailsEventViewer.buffer = buffer = RecordingBuffer.new
-      stub_adapter do |events|
-        raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
-      end
+      stub_adapter_rejecting_unwritable
       subscriber = Subscriber.new
-      buffer.push({ name: "poison", occurred_at: Time.current })
+      buffer.push({ name: "unwritable", occurred_at: Time.current })
 
       3.times do |round|
         buffer.push({ name: "good.#{round}", occurred_at: Time.current })
         3.times { subscriber.flush! }
-        assert_not_includes buffer.committed.map { |e| e[:name] }, "poison" if round < 2
+        assert_not_includes buffer.committed.map { |e| e[:name] }, "unwritable" if round < 2
       end
 
-      assert_includes buffer.committed.map { |e| e[:name] }, "poison"
+      assert_includes buffer.committed.map { |e| e[:name] }, "unwritable"
       assert_equal 0, buffer.size
     end
 
@@ -173,20 +167,18 @@ module RailsEventViewer
       buffer.define_singleton_method(:dead) { |entries| given_up.concat(entries) }
       RailsEventViewer.buffer = buffer
       output = capture_log
-      stub_adapter do |events|
-        raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name] == "poison" }
-      end
+      stub_adapter_rejecting_unwritable
       subscriber = Subscriber.new
-      buffer.push({ name: "poison", payload: { order_id: 42 }, occurred_at: Time.current })
+      buffer.push({ name: "unwritable", payload: { order_id: 42 }, occurred_at: Time.current })
 
       3.times do |round|
         buffer.push({ name: "good.#{round}", occurred_at: Time.current })
         3.times { subscriber.flush! }
       end
 
-      assert_equal %w[poison], given_up.map { |e| e[:name] }
-      assert_not_includes buffer.committed.map { |e| e[:name] }, "poison"
-      assert_match(/Gave up on 1 events the adapter rejected 3 times \(bad payload\): poison/, output.string)
+      assert_equal %w[unwritable], given_up.map { |e| e[:name] }
+      assert_not_includes buffer.committed.map { |e| e[:name] }, "unwritable"
+      assert_match(/Gave up on 1 events the adapter rejected 3 times \(bad payload\): unwritable/, output.string)
       assert_no_match(/order_id/, output.string)
     end
 
@@ -254,15 +246,47 @@ module RailsEventViewer
       assert_equal 10, buffer.size
     end
 
+    test "three rejected events at the head of the buffer do not block the events behind them" do
+      [Buffers::Memory.new, RecordingBuffer.new].each do |buffer|
+        RailsEventViewer.buffer = buffer
+        written = stub_adapter_rejecting_unwritable
+        subscriber = Subscriber.new
+        %w[unwritable.1 unwritable.2 unwritable.3 good.1 good.2].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
+
+        10.times { subscriber.flush! }
+
+        assert_equal %w[good.1 good.2], written.map { |e| e[:name] }, buffer.class.name
+        assert_equal 3, buffer.size, buffer.class.name
+      end
+    end
+
+    test "rejected events at the head are given up once later events have been written around them" do
+      RailsEventViewer.buffer = buffer = Buffers::Memory.new
+      output = capture_log
+      written = stub_adapter_rejecting_unwritable
+      subscriber = Subscriber.new
+      %w[unwritable.1 unwritable.2 unwritable.3 good.1].each { |name| buffer.push({ name: name, occurred_at: Time.current }) }
+      10.times { subscriber.flush! }
+
+      2.times do |round|
+        buffer.push({ name: "later.#{round}", occurred_at: Time.current })
+        10.times { subscriber.flush! }
+      end
+
+      assert_equal %w[good.1 later.0 later.1], written.map { |e| e[:name] }
+      assert_equal 0, buffer.size
+      assert_includes output.string, "Gave up on 3 events"
+    end
+
     test "a capacity drop forgets the strikes of the events it drops" do
       RailsEventViewer.buffer_size = 1
       flusher = Flusher.new(RecordingBuffer.new)
       flusher.define_singleton_method(:ensure_thread!) { }
       strikes = flusher.instance_variable_get(:@writer).instance_variable_get(:@strikes)
-      poison = { name: "poison" }
-      strikes[poison] = 2
+      unwritable = { name: "unwritable" }
+      strikes[unwritable] = 2
 
-      flusher.push(poison)
+      flusher.push(unwritable)
       10.times { |i| flusher.push({ name: "event.#{i}" }) }
 
       assert_empty strikes
@@ -476,6 +500,23 @@ module RailsEventViewer
       subscriber&.stop!
     end
 
+    test "a payload, tag or context with invalid UTF-8 is stored as its inspect output, so the event can be written" do
+      RailsEventViewer.async = true
+      RailsEventViewer.buffer = buffer = RecordingBuffer.new
+      subscriber = Subscriber.new
+      subscriber.instance_variable_get(:@flusher).define_singleton_method(:ensure_thread!) { }
+      broken = { note: "\xFF\xFE".dup.force_encoding("UTF-8") }
+
+      subscriber.emit(event_hash("upload.failed").merge(payload: broken, tags: broken, context: broken))
+      entry = buffer.drain(1).first
+
+      assert_equal [{ value: broken.inspect }] * 3, entry.values_at(:payload, :tags, :context)
+      assert_nothing_raised { RailsEventViewer::Adapters::ActiveRecord.new.write_events([entry]) }
+      assert_equal({ "value" => broken.inspect }, Entry.find_by!(name: "upload.failed").payload)
+    ensure
+      subscriber&.stop!
+    end
+
     test "the flusher writes inside the Rails executor" do
       executor_active = nil
       stub_adapter { |_| executor_active = Rails.application.executor.active? }
@@ -596,6 +637,16 @@ module RailsEventViewer
       adapter = Object.new
       adapter.define_singleton_method(:write_events, &write_events)
       RailsEventViewer.instance_variable_set(:@adapter, adapter)
+    end
+
+    def stub_adapter_rejecting_unwritable
+      written = []
+      stub_adapter do |events|
+        raise ActiveRecord::StatementInvalid, "bad payload" if events.any? { |e| e[:name].start_with?("unwritable") }
+
+        written.concat(events)
+      end
+      written
     end
 
     def capture_log
