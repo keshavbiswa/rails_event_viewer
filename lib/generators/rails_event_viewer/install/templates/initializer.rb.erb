@@ -56,14 +56,12 @@ RailsEventViewer.configure do |config|
   # How long to keep events before cleanup (used by retention task)
   # config.retention_period = 7.days
 
-  # Only capture specific events (empty = capture all Rails.event.notify() events)
-  # Note: This only affects events emitted via Rails.event.notify(), NOT internal
-  # Rails instrumentation events (sql.active_record, process_action.action_controller, etc.)
-  # which use ActiveSupport::Notifications and are not captured by this gem.
+  # Only capture specific events (empty = capture every event that is not ignored)
   # config.captured_events = ["user.created", "order.placed"]
 
-  # Ignore specific events (supports strings and regex patterns)
-  # config.ignored_events = ["internal.heartbeat", /^debug\./]
+  # Ignore more events (strings and regex patterns). Use += to keep the defaults,
+  # which skip Rails' own events such as action_controller.* and active_record.*
+  # config.ignored_events += ["internal.heartbeat", /^debug\./]
 
   # Default pagination limit
   # config.per_page = 25

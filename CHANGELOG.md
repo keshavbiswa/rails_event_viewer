@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.3.0 (2026-10-02)
+
+Breaking:
+
+- Event type and group pages moved to `/event_type?name=...` and `/group?key=...&value=...`. Old links to those pages no longer work.
+- Custom adapters: `counts_by_name` and `events_over_time` now take a `range:` argument.
+- Unknown options for the Redis and memory adapters raise an `ArgumentError`.
+- `with_tag` and `with_context` with a value of `""` or `false` now match that value, not every event that has the key.
+
+Fixed:
+
+- PostgreSQL: group pages no longer raise.
+- MySQL: the migration runs and search works.
+- Event names and group values with a slash no longer break the Event Types and Groups pages.
+- Tag and context filters return the same events on every database and adapter. A value typed as text also matches numbers and booleans.
+- Filter keys with a hyphen, dot, space or quote work on every database.
+- Events the database rejects no longer hold up the events behind them.
+- Payloads that cannot be serialized, such as invalid UTF-8, are stored as text.
+- A dropped connection during the first table check no longer stops capture until restart.
+- The analytics page respects its date range.
+- The generated Redis config suggests `redis_options`, which the adapter reads.
+- The generated initializer adds to `ignored_events` and keeps the defaults.
+
+Changed:
+
+- Removed two unused analytics endpoints.
+- The engine migration has a new timestamp and targets Rails 8.1. Apps that already installed it need no action.
+
 ## 0.2.1 (2026-10-01)
 
 - Forked workers no longer duplicate the parent's buffered events on exit.
