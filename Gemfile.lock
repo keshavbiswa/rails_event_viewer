@@ -154,6 +154,13 @@ GEM
     parser (3.3.10.0)
       ast (~> 2.4.1)
       racc
+    pg (1.6.3)
+    pg (1.6.3-aarch64-linux)
+    pg (1.6.3-aarch64-linux-musl)
+    pg (1.6.3-arm64-darwin)
+    pg (1.6.3-x86_64-darwin)
+    pg (1.6.3-x86_64-linux)
+    pg (1.6.3-x86_64-linux-musl)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -260,6 +267,8 @@ GEM
     stringio (3.1.9)
     thor (1.4.0)
     timeout (0.5.0)
+    trilogy (2.11.0)
+      bigdecimal
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -286,12 +295,14 @@ PLATFORMS
 
 DEPENDENCIES
   mock_redis
+  pg
   propshaft
   puma
   rails_event_viewer!
   redis
   rubocop-rails-omakase
   sqlite3
+  trilogy
 
 BUNDLED WITH
    2.7.1

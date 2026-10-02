@@ -119,7 +119,16 @@ production:
 ```bash
 bundle install
 bundle exec rake test
-cd test/dummy && bin/rails db:migrate && bin/rails server
+bin/rails db:migrate && bin/rails server
+```
+
+`rake test` prepares the test database first. Run it once before running a single test file.
+
+To test against PostgreSQL or MySQL, set `DATABASE_URL`:
+
+```bash
+DATABASE_URL=postgresql://localhost/rails_event_viewer_test bundle exec rake test
+DATABASE_URL=trilogy://root@127.0.0.1/rails_event_viewer_test bundle exec rake test
 ```
 
 ## License

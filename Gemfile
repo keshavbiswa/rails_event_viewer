@@ -5,6 +5,8 @@ gemspec
 
 gem "puma"
 gem "sqlite3"
+gem "pg"
+gem "trilogy"
 gem "propshaft"
 gem "rubocop-rails-omakase", require: false
 gem "redis"

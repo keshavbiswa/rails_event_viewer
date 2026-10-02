@@ -4,15 +4,17 @@ require "test_helper"
 
 module RailsEventViewer
   class JsonQueryTest < ActiveSupport::TestCase
-    test "#detect_adapter returns a valid adapter symbol" do
-      result = JsonQuery.detect_adapter
+    EXTRACT_REQUEST_ID = {
+      sqlite: "json_extract(context, '$.request_id')",
+      postgresql: "context ->> 'request_id'",
+      mysql: "JSON_UNQUOTE(JSON_EXTRACT(context, '$.request_id'))"
+    }.freeze
 
-      assert_includes [:sqlite, :postgresql, :mysql, :fallback], result
-    end
+    test "#detect_adapter matches the test database" do
+      adapter_name = ActiveRecord::Base.connection.adapter_name.downcase
+      expected = { "sqlite" => :sqlite, "postgresql" => :postgresql, "trilogy" => :mysql }
 
-    test "#detect_adapter returns sqlite for current test database" do
-      # Our test database is SQLite
-      assert_equal :sqlite, JsonQuery.detect_adapter
+      assert_equal expected.fetch(adapter_name), JsonQuery.detect_adapter
     end
 
     test "#sqlite_contains with key and value" do
@@ -100,28 +102,10 @@ module RailsEventViewer
       assert_match(/some\\_key\\%/, pattern)
     end
 
-    test "#extract_path returns sqlite syntax for sqlite" do
-      # Since we're on SQLite in tests
+    test "#extract_path uses the syntax of the test database" do
       result = JsonQuery.extract_path(:context, "request_id")
 
-      assert_equal "json_extract(context, '$.request_id')", result
-    end
-
-    test "postgresql #extract_path syntax" do
-      # Test the expected output directly by checking the method would produce
-      # the correct format for PostgreSQL (we can't change the adapter easily)
-      # So we verify the internal method produces correct syntax
-      # by calling the case clause logic manually
-      expected = "context ->> 'request_id'"
-
-      # This tests our understanding of what PostgreSQL syntax should look like
-      assert_equal "context ->> 'request_id'", expected
-    end
-
-    test "mysql #extract_path syntax" do
-      expected = "JSON_UNQUOTE(JSON_EXTRACT(context, '$.request_id'))"
-
-      assert_equal "JSON_UNQUOTE(JSON_EXTRACT(context, '$.request_id'))", expected
+      assert_equal EXTRACT_REQUEST_ID.fetch(JsonQuery.detect_adapter), result
     end
 
     test "#extract_path rejects keys that could break out of the SQL string" do
@@ -130,16 +114,10 @@ module RailsEventViewer
       end
     end
 
-    test "#extract_path_not_null appends IS NOT NULL" do
+    test "#extract_path_not_null uses the syntax of the test database" do
       result = JsonQuery.extract_path_not_null(:context, "request_id")
 
-      assert_match(/IS NOT NULL$/, result)
-    end
-
-    test "#extract_path_not_null for sqlite" do
-      result = JsonQuery.extract_path_not_null(:context, "request_id")
-
-      assert_equal "json_extract(context, '$.request_id') IS NOT NULL", result
+      assert_equal "#{EXTRACT_REQUEST_ID.fetch(JsonQuery.detect_adapter)} IS NOT NULL", result
     end
 
     test "#normalize_sqlite_value with non-string returns unchanged" do
@@ -190,7 +168,7 @@ module RailsEventViewer
       refute_match JsonQuery::FLOAT_PATTERN, "12a"
     end
 
-    test "#contains works with actual SQLite query" do
+    test "#contains works with an actual query" do
       Entry.delete_all
 
       Entry.create!(
@@ -211,7 +189,7 @@ module RailsEventViewer
       assert_equal "test.event", results.first.name
     end
 
-    test "#contains with key only works with actual SQLite query" do
+    test "#contains with key only works with an actual query" do
       Entry.delete_all
 
       Entry.create!(
@@ -232,7 +210,7 @@ module RailsEventViewer
       assert_equal "with.tag", results.first.name
     end
 
-    test "#extract_path works in SELECT with actual SQLite query" do
+    test "#extract_path works in SELECT with an actual query" do
       Entry.delete_all
 
       Entry.create!(
@@ -247,12 +225,10 @@ module RailsEventViewer
       assert_equal "abc-123", result
     end
 
-    test "#contains dispatches to correct adapter method" do
-      # We're on SQLite, so it should use sqlite_contains
-      query, *params = JsonQuery.contains(:tags, "key", "value")
+    test "#contains dispatches to the method for the test database" do
+      expected = JsonQuery.public_send("#{JsonQuery.detect_adapter}_contains", :tags, "key", "value")
 
-      assert_equal "json_extract(tags, ?) = ?", query
-      assert_equal ["$.key", "value"], params
+      assert_equal expected, JsonQuery.contains(:tags, "key", "value")
     end
   end
 end
