@@ -20,7 +20,7 @@ module RailsEventViewer
 
       def initialize(redis_options: {}, pool_size: DEFAULT_POOL_SIZE, pool_timeout: DEFAULT_POOL_TIMEOUT,
                      pool: build_pool(pool_size, pool_timeout, redis_options),
-                     key_prefix: DEFAULT_KEY_PREFIX, max_events: DEFAULT_MAX_EVENTS, **)
+                     key_prefix: DEFAULT_KEY_PREFIX, max_events: DEFAULT_MAX_EVENTS)
         @redis = pool
         @key_prefix = "{#{key_prefix}}"
         @max_events = max_events

@@ -16,9 +16,9 @@ RailsEventViewer.configure do |config|
 <% if storage_adapter == "redis" %>
 
   config.adapter_options = {
-    # redis: Redis.new(url: ENV["REDIS_URL"]),  # Your Redis instance
-    # key_prefix: "rails_event_viewer",          # Key prefix for Redis keys
-    # max_events: 10_000                         # Maximum events to retain
+    # redis_options: { url: ENV["REDIS_URL"] },  # Passed to Redis.new
+    # key_prefix: "rails_event_viewer",           # Key prefix for Redis keys
+    # max_events: 10_000                          # Maximum events to retain
   }
 <% elsif storage_adapter == "active_record" %>
 

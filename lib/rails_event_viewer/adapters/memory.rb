@@ -20,7 +20,7 @@ module RailsEventViewer
         self.class.events
       end
 
-      def initialize(max_events: 1000, **)
+      def initialize(max_events: 1000)
         @max_events = max_events
       end
 
