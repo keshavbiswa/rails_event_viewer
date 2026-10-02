@@ -4,40 +4,15 @@ module RailsEventViewer
 
     def overview
       @date_range = parse_date_range
+      counts = current_adapter.counts_by_name(range: @date_range)
 
-      relation = RailsEventViewer.events
-                   .since(@date_range.begin)
-                   .until(@date_range.end)
-
-      @total_events = relation.count
-      @unique_event_types = current_adapter.distinct_event_names.size
-      @events_by_type = current_adapter.counts_by_name(limit: 20)
-      @events_over_time = current_adapter.events_over_time(since: @date_range.begin, interval: period_for_range)
+      @total_events = counts.values.sum
+      @unique_event_types = counts.size
+      @events_by_type = counts.first(20).to_h
+      @events_over_time = current_adapter.events_over_time(range: @date_range, interval: period_for_range)
 
       @avg_events_per_hour = calculate_avg_events_per_hour
       @peak_period = find_peak_period
-    end
-
-    def events_over_time
-      since = params[:since]&.to_i&.seconds&.ago || 24.hours.ago
-      interval = params[:interval]&.to_sym || :hour
-
-      @events_data = current_adapter.events_over_time(since: since, interval: interval)
-
-      respond_to do |format|
-        format.json { render json: @events_data }
-        format.html { render partial: "events_over_time_chart" }
-      end
-    end
-
-    def events_by_type
-      limit = (params[:limit] || 20).to_i.clamp(1, 100)
-      @data = current_adapter.counts_by_name(limit: limit)
-
-      respond_to do |format|
-        format.json { render json: @data }
-        format.html { render partial: "events_by_type_chart" }
-      end
     end
 
     private

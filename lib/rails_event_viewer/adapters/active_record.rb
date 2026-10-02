@@ -57,28 +57,13 @@ module RailsEventViewer
         Entry.where("occurred_at < ?", timestamp).in_batches.delete_all
       end
 
-      def events_over_time(since:, interval:)
-        scope = Entry.where("occurred_at >= ?", since)
-
-        case interval
-        when :minute
-          scope.group_by_minute(:occurred_at).count
-        when :hour
-          scope.group_by_hour(:occurred_at).count
-        when :day
-          scope.group_by_day(:occurred_at).count
-        when :week
-          scope.group_by_week(:occurred_at).count
-        else
-          scope.group_by_hour(:occurred_at).count
-        end
+      def events_over_time(range:, interval:)
+        Entry.where(occurred_at: range).group_by_period(interval, :occurred_at).count
       end
 
-      def counts_by_name(limit:)
-        Entry.group(:name)
-             .order(Arel.sql("COUNT(*) DESC"))
-             .limit(limit)
-             .count
+      def counts_by_name(limit: nil, range: nil)
+        scope = range ? Entry.where(occurred_at: range) : Entry
+        scope.group(:name).order(Arel.sql("COUNT(*) DESC")).limit(limit).count
       end
 
       def count_since(since)

@@ -42,7 +42,7 @@ module RailsEventViewer
       end
 
       test "events_over_time returns empty hash" do
-        assert_equal({}, @adapter.events_over_time(since: 1.hour.ago, interval: :hour))
+        assert_equal({}, @adapter.events_over_time(range: 1.hour.ago.., interval: :hour))
       end
 
       test "counts_by_name returns empty hash" do

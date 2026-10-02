@@ -164,7 +164,7 @@ module RailsEventViewer
           { name: "event3", occurred_at: 30.minutes.ago }
         ])
 
-        result = @adapter.events_over_time(since: 2.hours.ago, interval: :hour)
+        result = @adapter.events_over_time(range: 2.hours.ago.., interval: :hour)
         assert_instance_of Hash, result
       end
 

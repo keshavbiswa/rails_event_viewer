@@ -161,7 +161,7 @@ module RailsEventViewer
         Entry.create!(name: "event1", occurred_at: 1.hour.ago)
         Entry.create!(name: "event2", occurred_at: 30.minutes.ago)
 
-        result = @adapter.events_over_time(since: 2.hours.ago, interval: :hour)
+        result = @adapter.events_over_time(range: 2.hours.ago.., interval: :hour)
         assert_instance_of Hash, result
       end
 
