@@ -9,7 +9,7 @@ module RailsEventViewer
 
       def table_exists?
         Entry.table_exists?
-      rescue ::ActiveRecord::NoDatabaseError, ::ActiveRecord::StatementInvalid
+      rescue ::ActiveRecord::NoDatabaseError
         false
       end
 
