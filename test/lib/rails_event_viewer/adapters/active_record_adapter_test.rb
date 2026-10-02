@@ -321,6 +321,17 @@ module RailsEventViewer
         assert_equal 1, @adapter.fetch_events(relation.search("alice@example")).to_a.size
       end
 
+      test "search matches percent, underscore and exclamation mark literally" do
+        Entry.create!(name: "sale.started", payload: { note: "50% off_now!" }, occurred_at: Time.current)
+        Entry.create!(name: "sale.ended", payload: { note: "500 offXnow" }, occurred_at: Time.current)
+
+        relation = EventsRelation.new(adapter: @adapter)
+
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("50%")).map(&:name)
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("off_now")).map(&:name)
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("now!")).map(&:name)
+      end
+
       test "fetch_last returns the oldest matching event" do
         Entry.create!(name: "a", occurred_at: 1.minute.ago)
         oldest = Entry.create!(name: "a", occurred_at: 1.day.ago)

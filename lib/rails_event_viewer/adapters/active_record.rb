@@ -142,7 +142,7 @@ module RailsEventViewer
       end
 
       def event_time_span(relation)
-        row = build_scope(relation).pick(
+        row = build_scope(relation).unscope(:order).pick(
           Arel.sql("MIN(occurred_at)"),
           Arel.sql("MAX(occurred_at)")
         )
@@ -215,10 +215,10 @@ module RailsEventViewer
       def apply_search(scope, relation)
         return scope if relation.query.blank?
 
-        sanitized = "%#{Entry.sanitize_sql_like(relation.query.downcase)}%"
+        sanitized = "%#{Entry.sanitize_sql_like(relation.query.downcase, "!")}%"
         text_type = JsonQuery.detect_adapter == :mysql ? "CHAR" : "TEXT"
         scope.where(
-          "LOWER(name) LIKE :q ESCAPE '\\' OR LOWER(CAST(payload AS #{text_type})) LIKE :q ESCAPE '\\'",
+          "LOWER(name) LIKE :q ESCAPE '!' OR LOWER(CAST(payload AS #{text_type})) LIKE :q ESCAPE '!'",
           q: sanitized
         )
       end
