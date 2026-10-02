@@ -9,8 +9,6 @@ RailsEventViewer::Engine.routes.draw do
 
   namespace :analytics do
     get :overview
-    get :events_over_time
-    get :events_by_type
   end
 
   resources :event_types, only: :index

@@ -28,7 +28,26 @@ module RailsEventViewer
           [timestamps.min, timestamps.max]
         end
 
+        def events_over_time(range:, interval:)
+          events_in(range)
+            .group_by { |e| TimeUtils.truncate_to_interval(e[:occurred_at], interval) }
+            .transform_values(&:size)
+            .sort
+            .to_h
+        end
+
+        def counts_by_name(limit: nil, range: nil)
+          counts = events_in(range).map { |e| e[:name] }.tally.sort_by { |_, count| -count }
+          (limit ? counts.first(limit) : counts).to_h
+        end
+
         private
+
+        def events_in(range)
+          return in_memory_events unless range
+
+          in_memory_events.select { |e| e[:occurred_at] && range.cover?(e[:occurred_at]) }
+        end
 
         def group_value_for(event, key, source)
           data = event[source]

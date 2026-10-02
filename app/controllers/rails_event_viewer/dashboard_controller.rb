@@ -8,7 +8,7 @@ module RailsEventViewer
 
       if analytics_supported?
         @events_by_type = current_adapter.counts_by_name(limit: 10)
-        @events_over_time = current_adapter.events_over_time(since: 24.hours.ago, interval: :hour)
+        @events_over_time = current_adapter.events_over_time(range: 24.hours.ago.., interval: :hour)
       else
         @events_by_type = {}
         @events_over_time = {}

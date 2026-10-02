@@ -8,16 +8,9 @@ module RailsEventViewer
       return nil unless time
 
       case interval
-      when :minute
-        time.beginning_of_minute
-      when :hour
-        time.beginning_of_hour
-      when :day
-        time.beginning_of_day
-      when :week
-        time.beginning_of_week
-      else
-        time.beginning_of_hour
+      when :hour then time.beginning_of_hour
+      when :day then time.beginning_of_day
+      else raise ArgumentError, "Unknown interval: #{interval.inspect}"
       end
     end
   end

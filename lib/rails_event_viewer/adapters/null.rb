@@ -39,11 +39,11 @@ module RailsEventViewer
         0
       end
 
-      def events_over_time(since:, interval:)
+      def events_over_time(range:, interval:)
         {}
       end
 
-      def counts_by_name(limit:)
+      def counts_by_name(limit: nil, range: nil)
         {}
       end
 

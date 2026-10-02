@@ -68,26 +68,6 @@ module RailsEventViewer
         end
       end
 
-      def events_over_time(since:, interval:)
-        snapshot = mutex.synchronize { events.dup }
-        filtered = snapshot.select { |e| e[:occurred_at] && e[:occurred_at] >= since }
-
-        grouped = filtered.group_by do |e|
-          TimeUtils.truncate_to_interval(e[:occurred_at], interval)
-        end
-
-        grouped.transform_values(&:size).sort.to_h
-      end
-
-      def counts_by_name(limit:)
-        mutex.synchronize { events.dup }
-          .group_by { |e| e[:name] }
-          .transform_values(&:size)
-          .sort_by { |_, count| -count }
-          .take(limit)
-          .to_h
-      end
-
       def count_since(since)
         mutex.synchronize { events.count { |e| e[:occurred_at] && e[:occurred_at] >= since } }
       end

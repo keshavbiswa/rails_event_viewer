@@ -38,12 +38,12 @@ module RailsEventViewer
       raise NotImplementedError, "#{self.class} must implement #find_event"
     end
 
-    def events_over_time(since:, interval:)
+    def events_over_time(range:, interval:)
       raise NotImplementedError, "#{self.class} must implement #events_over_time" if supports_analytics?
       {}
     end
 
-    def counts_by_name(limit:)
+    def counts_by_name(limit: nil, range: nil)
       raise NotImplementedError, "#{self.class} must implement #counts_by_name" if supports_analytics?
       {}
     end

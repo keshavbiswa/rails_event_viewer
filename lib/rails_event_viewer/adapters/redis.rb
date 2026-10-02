@@ -105,24 +105,6 @@ module RailsEventViewer
         end
       end
 
-      def events_over_time(since:, interval:)
-        events = fetch_events_since(since)
-
-        events.group_by do |e|
-          TimeUtils.truncate_to_interval(e[:occurred_at], interval)
-        end.transform_values(&:size)
-      end
-
-      def counts_by_name(limit:)
-        serialized_events = @redis.with { |conn| conn.zrevrange(events_key, 0, -1) }
-        serialized_events
-          .map { |json| deserialize_event(json)[:name] }
-          .tally
-          .sort_by { |_, count| -count }
-          .take(limit)
-          .to_h
-      end
-
       def count_since(since)
         score = (since.to_f * 1_000_000).to_i
         @redis.with { |conn| conn.zcount(events_key, score, "+inf") }
@@ -187,12 +169,6 @@ module RailsEventViewer
         end
 
         data
-      end
-
-      def fetch_events_since(since)
-        score = (since.to_f * 1_000_000).to_i
-        serialized_events = @redis.with { |conn| conn.zrangebyscore(events_key, score, "+inf") }
-        serialized_events.map { |json| deserialize_event(json) }
       end
 
       def fetch_all_events
