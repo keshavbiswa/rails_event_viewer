@@ -1,13 +1,14 @@
-class CreateRailsEventViewerEntries < ActiveRecord::Migration[8.0]
+class CreateRailsEventViewerEntries < ActiveRecord::Migration[8.1]
   def change
     create_table :rails_event_viewer_entries do |t|
       t.string :name, null: false
 
       # Use jsonb for PostgreSQL (better performance), json for others (SQLite, MySQL)
       json_type = postgresql? ? :jsonb : :json
-      t.column :payload, json_type, default: {}
-      t.column :tags, json_type, default: {}
-      t.column :context, json_type, default: {}
+      json_options = mysql? ? {} : { default: {} }
+      t.column :payload, json_type, **json_options
+      t.column :tags, json_type, **json_options
+      t.column :context, json_type, **json_options
 
       t.string :source_file
       t.integer :source_line
@@ -32,5 +33,9 @@ class CreateRailsEventViewerEntries < ActiveRecord::Migration[8.0]
 
   def postgresql?
     connection.adapter_name.downcase.include?("postgresql")
+  end
+
+  def mysql?
+    connection.adapter_name.match?(/mysql|trilogy/i)
   end
 end
