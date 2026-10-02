@@ -94,6 +94,17 @@ Set `RAILS_ENV` on every server. Without it, Rails falls back to development and
 
 Set `config.storage_adapter` to `:active_record` (default), `:redis`, `:memory`, or `:null`. Redis needs the `redis` gem and takes options through `config.adapter_options`.
 
+```ruby
+config.storage_adapter = :redis
+config.adapter_options = {
+  redis_options: { url: ENV["REDIS_URL"] },  # passed to Redis.new
+  key_prefix: "rails_event_viewer",
+  max_events: 10_000
+}
+```
+
+Pass `pool:` to use your own `ConnectionPool`, or `pool_size:` and `pool_timeout:` to size the built-in one. The memory adapter takes `max_events:`. An unknown option raises an `ArgumentError`.
+
 Filtered queries on Redis scan every stored event, so keep `max_events` (how many events Redis keeps, set in `adapter_options`) modest. For your own storage, include `RailsEventViewer::Adapter`.
 
 ## Rake tasks
