@@ -17,8 +17,10 @@ module RailsEventViewer
     end
 
     def show
-      @key = params[:key]
-      @value = params[:id]
+      @key = string_param(:key)
+      @value = string_param(:value)
+      return redirect_to groups_path unless @key && @value
+
       @source = source_param
 
       events = if @source == :tags

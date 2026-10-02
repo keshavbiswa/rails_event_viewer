@@ -5,7 +5,9 @@ module RailsEventViewer
     end
 
     def show
-      @event_type_name = params[:name]
+      @event_type_name = string_param(:name)
+      return redirect_to event_types_path unless @event_type_name
+
       total_events = RailsEventViewer.events.with_name(@event_type_name)
 
       @pagination, @events = paginate(total_events)

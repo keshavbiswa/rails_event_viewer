@@ -69,6 +69,15 @@ module RailsEventViewer
       assert_response :success
     end
 
+    test "show renders for an event whose name has a slash and links to its event type" do
+      event = Entry.create!(name: "billing/invoice.paid", occurred_at: Time.current)
+
+      get rails_event_viewer.event_path(event)
+
+      assert_response :success
+      assert_select "a[href=?]", rails_event_viewer.event_type_path(name: "billing/invoice.paid")
+    end
+
     test "show with non-existent event redirects" do
       get rails_event_viewer.event_path(id: 999999)
 

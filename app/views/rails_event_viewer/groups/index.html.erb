@@ -67,7 +67,7 @@
             <% duration = group[:last_event_at] && group[:first_event_at] ? group[:last_event_at] - group[:first_event_at] : nil %>
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
-                <%= link_to rails_event_viewer.group_path(group[:value], key: @selected_key, source: @source),
+                <%= link_to rails_event_viewer.group_path(value: group[:value], key: @selected_key, source: @source),
                     class: "text-indigo-600 hover:text-indigo-900 font-medium" do %>
                   <code class="text-sm bg-gray-100 px-2 py-1 rounded"><%= group[:value] %></code>
                 <% end %>
