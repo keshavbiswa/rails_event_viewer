@@ -61,7 +61,7 @@ module RailsEventViewer
       get rails_event_viewer.events_path
       assert_select "tr[data-event-viewer-href]"
 
-      get rails_event_viewer.event_type_path("order.placed")
+      get rails_event_viewer.event_type_path(name: "order.placed")
       assert_select "tr[data-event-viewer-href]"
 
       get rails_event_viewer.event_path(@event)
@@ -93,9 +93,9 @@ module RailsEventViewer
         rails_event_viewer.events_path,
         rails_event_viewer.event_path(@event),
         rails_event_viewer.event_types_path,
-        rails_event_viewer.event_type_path("order.placed"),
+        rails_event_viewer.event_type_path(name: "order.placed"),
         rails_event_viewer.groups_path,
-        rails_event_viewer.group_path("r1", key: "request_id"),
+        rails_event_viewer.group_path(value: "r1", key: "request_id"),
         rails_event_viewer.analytics_overview_path
       ]
     end

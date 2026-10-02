@@ -128,7 +128,7 @@ module RailsEventViewer
         occurred_at: Time.current
       )
 
-      get rails_event_viewer.group_path("req-123", key: "request_id")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id")
 
       assert_response :success
     end
@@ -140,7 +140,7 @@ module RailsEventViewer
         occurred_at: Time.current
       )
 
-      get rails_event_viewer.group_path("req-123", key: "request_id", source: "context")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id", source: "context")
 
       assert_response :success
     end
@@ -152,7 +152,7 @@ module RailsEventViewer
         occurred_at: Time.current
       )
 
-      get rails_event_viewer.group_path("req-123", key: "request_id", source: "tags")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id", source: "tags")
 
       assert_response :success
     end
@@ -166,7 +166,7 @@ module RailsEventViewer
         )
       end
 
-      get rails_event_viewer.group_path("req-123", key: "request_id")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id")
 
       assert_response :success
       assert_equal 5, controller.instance_variable_get(:@total_count)
@@ -181,14 +181,14 @@ module RailsEventViewer
         )
       end
 
-      get rails_event_viewer.group_path("req-123", key: "request_id")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id")
 
       assert_response :success
       assert_equal 30, controller.instance_variable_get(:@total_count)
     end
 
     test "show with no matching events" do
-      get rails_event_viewer.group_path("nonexistent", key: "request_id")
+      get rails_event_viewer.group_path(value: "nonexistent", key: "request_id")
       assert_response :success
     end
 
@@ -197,7 +197,7 @@ module RailsEventViewer
       25.times { Entry.create!(name: "middle", context: { request_id: "req-123" }, occurred_at: 30.minutes.ago) }
       Entry.create!(name: "last", context: { request_id: "req-123" }, occurred_at: 1.minute.ago)
 
-      get rails_event_viewer.group_path("req-123", key: "request_id")
+      get rails_event_viewer.group_path(value: "req-123", key: "request_id")
 
       assert_response :success
       first_at = controller.instance_variable_get(:@first_event_at)
@@ -212,7 +212,7 @@ module RailsEventViewer
     test "show keeps dots in the group value" do
       Entry.create!(name: "user.signed_in", context: { request_id: "alice@example.com" }, occurred_at: Time.current)
 
-      get rails_event_viewer.group_path("alice@example.com", key: "request_id")
+      get rails_event_viewer.group_path(value: "alice@example.com", key: "request_id")
 
       assert_response :success
       assert_equal "alice@example.com", controller.instance_variable_get(:@value)
@@ -229,7 +229,7 @@ module RailsEventViewer
 
       assert_equal [["42", 3]], groups.map { |group| [group[:value], group[:count]] }
 
-      get rails_event_viewer.group_path("42", key: "user_id")
+      get rails_event_viewer.group_path(value: "42", key: "user_id")
 
       assert_response :success
       assert_equal 3, controller.instance_variable_get(:@total_count)
@@ -239,9 +239,44 @@ module RailsEventViewer
       Entry.create!(name: "order.placed", context: { user_id: 42 }, occurred_at: Time.current)
 
       ["[", "trace-id", "a b"].each do |key|
-        get rails_event_viewer.group_path("42", key: key)
+        get rails_event_viewer.group_path(value: "42", key: key)
 
         assert_response :success
+      end
+    end
+
+    test "every group on the index opens, whatever characters the value has" do
+      values = ["/orders/1", "a/b/c", "report.json", "a?b#c&d=e", "50% off", "café", "a b", " "]
+      values.each { |value| Entry.create!(name: "page.viewed", context: { request_id: value }, occurred_at: Time.current) }
+
+      get rails_event_viewer.groups_path
+
+      assert_response :success
+      links = css_select("a[href^='#{rails_event_viewer.group_path}?']").map { |link| link["href"] }
+      assert_equal values.size, links.size
+
+      opened = links.map do |href|
+        get href
+
+        assert_response :success
+        assert_equal 1, controller.instance_variable_get(:@total_count)
+        controller.instance_variable_get(:@value)
+      end
+
+      assert_equal values.sort, opened.sort
+    end
+
+    test "show without a usable key and value goes back to the index" do
+      [
+        rails_event_viewer.group_path,
+        rails_event_viewer.group_path(key: "request_id"),
+        rails_event_viewer.group_path(value: "r1"),
+        "#{rails_event_viewer.group_path}?key[]=request_id&value=r1",
+        "#{rails_event_viewer.group_path}?key=request_id&value[a]=r1"
+      ].each do |path|
+        get path
+
+        assert_redirected_to rails_event_viewer.groups_path
       end
     end
   end

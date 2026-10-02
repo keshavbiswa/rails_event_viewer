@@ -42,6 +42,11 @@ module RailsEventViewer
       Time.use_zone(zone, &block)
     end
 
+    def string_param(key)
+      value = params[key]
+      value if value.is_a?(String) && !value.empty?
+    end
+
     def safe_parse_date(date_string, default: nil)
       return default if date_string.blank?
 
