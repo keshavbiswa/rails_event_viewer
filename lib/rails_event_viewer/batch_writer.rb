@@ -47,7 +47,8 @@ module RailsEventViewer
       end
 
       if written.empty?
-        @buffer.revert(events)
+        untried = events.drop(rejected.size)
+        @buffer.revert(untried + rejected)
         return false
       end
 
