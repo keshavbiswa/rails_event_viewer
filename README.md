@@ -60,6 +60,7 @@ RailsEventViewer.configure do |config|
   config.buffer_size = 100                  # flush after this many events
   config.flush_interval = 2                 # or after this many seconds
   config.sample_rate = 1.0                  # 0.1 keeps 10% of events
+  config.transactional = true               # with async = false, a failed write aborts the transaction
 
   config.captured_events = []               # empty captures everything
   config.ignored_events += [/^debug\./]     # strings or regexes
@@ -74,6 +75,7 @@ Internal Rails events such as `active_record.*` and `action_controller.*` are ig
 ## Sync vs async
 
 - With `async = false`, each event is written inside your transaction, and a failed write is reported to `Rails.error`. In development and test, where Rails sets `raise_on_error`, it raises instead.
+  Sync writes are transactional by default, so a failed event write aborts the transaction on PostgreSQL. Set `transactional = false` to run each write in a savepoint instead.
 - With `async = true`, events wait in an in-memory buffer and are lost if the process is killed. Set `config.buffer` to your own `RailsEventViewer::Buffer`, for example backed by Redis, to keep them.
 
 ## Authentication

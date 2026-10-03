@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+Added:
+
+- `config.transactional`, on by default. With `async = false`, set it to `false` so a failed event write does not abort the transaction caller's code is running in.
+
 ## 0.4.0 (2026-10-03)
 
 Breaking:
