@@ -183,6 +183,7 @@ module RailsEventViewer
 
       get rails_event_viewer.events_path(name: "keep.me", per_page: 10)
 
+      assert_select "a[aria-current=page]", "Events"
       links = css_select("nav[aria-label=Pagination] a").map { |a| a["href"] }
       assert_includes links, rails_event_viewer.events_path(name: "keep.me", page: 2, per_page: 10)
 

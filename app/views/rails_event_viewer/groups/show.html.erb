@@ -4,7 +4,7 @@
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div class="flex items-center space-x-4">
-      <%= link_to rails_event_viewer.groups_path(key: @key, source: @source), class: "text-gray-400 hover:text-gray-600", aria: { label: "Back to groups" } do %>
+      <%= link_to rails_event_viewer.groups_path(key: @key, source: @source), class: "text-gray-500 hover:text-gray-700", aria: { label: "Back to groups" } do %>
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -37,7 +37,7 @@
   <!-- Timeline -->
   <div class="bg-white shadow rounded-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-medium text-gray-900">Event Timeline</h3>
+      <h2 class="text-lg font-medium text-gray-900">Event Timeline</h2>
       <% if @first_event_at && @last_event_at %>
         <p class="text-sm text-gray-500">
           <%= @first_event_at.strftime("%Y-%m-%d %H:%M:%S") %> to <%= @last_event_at.strftime("%Y-%m-%d %H:%M:%S") %>
@@ -57,7 +57,7 @@
               <% if @first_event_at && event_occurred_at(event) %>
                 <% offset = event_occurred_at(event) - @first_event_at %>
                 <div class="absolute left-0 top-4 w-9 text-right">
-                  <span class="text-xs text-gray-400" title="<%= format_duration(offset) %> from start">
+                  <span class="text-xs text-gray-500" title="<%= format_duration(offset) %> from start">
                     <% if offset < 0.001 %>
                       0
                     <% elsif offset < 1 %>
@@ -109,7 +109,7 @@
                     <%= time_ago_with_title(event_occurred_at(event)) %>
                   </p>
                   <% if event_source_file(event).present? %>
-                    <p class="text-xs text-gray-400 mt-1">
+                    <p class="text-xs text-gray-500 mt-1">
                       <%= event_short_filepath(event) %>:<%= event_source_line(event) %>
                     </p>
                   <% end %>

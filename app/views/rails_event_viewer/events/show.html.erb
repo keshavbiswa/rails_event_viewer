@@ -3,8 +3,8 @@
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center space-x-4">
-    <%= link_to rails_event_viewer.events_path, class: "text-gray-400 hover:text-gray-600", aria: { label: "Back to events" } do %>
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <%= link_to rails_event_viewer.events_path, class: "text-gray-500 hover:text-gray-700", aria: { label: "Back to events" } do %>
+      <svg aria-hidden="true" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     <% end %>
@@ -20,7 +20,7 @@
       <!-- Payload -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 class="text-lg font-medium text-gray-900">Payload</h3>
+          <h2 class="text-lg font-medium text-gray-900">Payload</h2>
           <button type="button"
                   data-event-viewer-copy="<%= JSON.generate(event_payload(@event)) %>"
                   class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
@@ -34,7 +34,7 @@
               <%= json_tree(payload) %>
             </div>
           <% else %>
-            <span class="text-gray-400">Empty payload</span>
+            <span class="text-gray-500">Empty payload</span>
           <% end %>
         </div>
       </div>
@@ -44,7 +44,7 @@
       <% if tags.present? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Tags</h3>
+            <h2 class="text-lg font-medium text-gray-900">Tags</h2>
           </div>
           <div class="p-6">
             <div class="font-mono text-sm break-words">
@@ -59,7 +59,7 @@
       <% if context.present? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Context</h3>
+            <h2 class="text-lg font-medium text-gray-900">Context</h2>
           </div>
           <div class="p-6">
             <div class="font-mono text-sm break-words">
@@ -75,7 +75,7 @@
       <!-- Metadata -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900">Metadata</h3>
+          <h2 class="text-lg font-medium text-gray-900">Metadata</h2>
         </div>
         <dl class="divide-y divide-gray-200">
           <div class="px-6 py-4">
@@ -114,7 +114,7 @@
       <% if @related_events.any? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Related Events</h3>
+            <h2 class="text-lg font-medium text-gray-900">Related Events</h2>
             <p class="text-xs text-gray-500">Same request context</p>
           </div>
           <ul class="divide-y divide-gray-200">
@@ -137,7 +137,7 @@
       <!-- Quick Links -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900">Quick Links</h3>
+          <h2 class="text-lg font-medium text-gray-900">Quick Links</h2>
         </div>
         <div class="p-4 space-y-2">
           <%= link_to rails_event_viewer.events_path(name: event_name(@event)),

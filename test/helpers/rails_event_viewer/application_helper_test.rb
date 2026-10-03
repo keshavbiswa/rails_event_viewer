@@ -233,26 +233,5 @@ module RailsEventViewer
 
       assert_nil event_short_filepath(event)
     end
-
-    test "#nav_link_class returns active class for current controller" do
-      # Mock controller_name method
-      def controller_name
-        "events"
-      end
-
-      result = nav_link_class("events")
-
-      assert_match(/bg-indigo-700/, result)
-    end
-
-    test "#nav_link_class returns inactive class for other controller" do
-      def controller_name
-        "events"
-      end
-
-      result = nav_link_class("dashboard")
-      assert_match(/text-indigo-200/, result)
-      assert_match(/hover:bg-indigo-500/, result)
-    end
   end
 end

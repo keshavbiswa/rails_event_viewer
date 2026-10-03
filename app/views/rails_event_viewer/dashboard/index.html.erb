@@ -28,7 +28,7 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Events over time chart -->
       <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Events (Last 24 Hours)</h3>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Events (Last 24 Hours)</h2>
         <div class="h-72 overflow-hidden">
           <% if @events_over_time.any? %>
             <%= line_chart @events_over_time,
@@ -38,7 +38,7 @@
                 colors: ["#4F46E5"],
                 library: { plugins: { legend: { display: false } } } %>
           <% else %>
-            <div class="flex items-center justify-center h-full text-gray-400">
+            <div class="flex items-center justify-center h-full text-gray-500">
               No events in the last 24 hours
             </div>
           <% end %>
@@ -47,7 +47,7 @@
 
       <!-- Events by type chart -->
       <div class="bg-white rounded-lg shadow p-6 overflow-hidden">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Events by Type</h3>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Events by Type</h2>
         <div class="h-72 overflow-hidden">
           <% if @events_by_type.any? %>
             <%= pie_chart @events_by_type,
@@ -57,7 +57,7 @@
                 donut: true,
                 colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16"] %>
           <% else %>
-            <div class="flex items-center justify-center h-full text-gray-400">
+            <div class="flex items-center justify-center h-full text-gray-500">
               No events to display
             </div>
           <% end %>
@@ -69,7 +69,7 @@
   <!-- Recent events -->
   <div class="bg-white rounded-lg shadow">
     <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-      <h3 class="text-lg font-medium text-gray-900">Recent Events</h3>
+      <h2 class="text-lg font-medium text-gray-900">Recent Events</h2>
       <%= link_to "View all", rails_event_viewer.events_path, class: "text-indigo-600 hover:text-indigo-500 text-sm font-medium" %>
     </div>
 
@@ -78,9 +78,9 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payload</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payload</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -103,10 +103,10 @@
       </div>
     <% else %>
       <div class="px-6 py-12 text-center text-gray-500">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg aria-hidden="true" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No events yet</h3>
+        <h2 class="mt-2 text-sm font-medium text-gray-900">No events yet</h2>
         <p class="mt-1 text-sm text-gray-500">Events will appear here once they are captured.</p>
       </div>
     <% end %>

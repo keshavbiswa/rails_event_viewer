@@ -21,13 +21,13 @@
     <main class="py-6">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <% if notice.present? %>
-          <div class="mb-4 rounded-md bg-green-50 p-4">
+          <div class="mb-4 rounded-md bg-green-50 p-4" role="status">
             <p class="text-sm font-medium text-green-800"><%= notice %></p>
           </div>
         <% end %>
 
         <% if alert.present? %>
-          <div class="mb-4 rounded-md bg-red-50 p-4">
+          <div class="mb-4 rounded-md bg-red-50 p-4" role="alert">
             <p class="text-sm font-medium text-red-800"><%= alert %></p>
           </div>
         <% end %>

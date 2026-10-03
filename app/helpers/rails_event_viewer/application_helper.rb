@@ -1,13 +1,10 @@
 module RailsEventViewer
   module ApplicationHelper
-    def nav_link_class(controller)
-      base_classes = "rounded-md px-3 py-2 text-sm font-medium"
+    def nav_link(label, path, controller)
+      active = controller_name == controller
+      state_classes = active ? "bg-indigo-700 text-white" : "text-indigo-200 hover:bg-indigo-500 hover:text-white"
 
-      if controller_name == controller
-        "#{base_classes} bg-indigo-700 text-white"
-      else
-        "#{base_classes} text-indigo-200 hover:bg-indigo-500 hover:text-white"
-      end
+      link_to label, path, class: "rounded-md px-3 py-2 text-sm font-medium #{state_classes}", aria: { current: ("page" if active) }
     end
 
     def format_event_time(event)
@@ -29,9 +26,9 @@ module RailsEventViewer
     end
 
     def json_tree(data, depth: 0, max_depth: nil)
-      return content_tag(:span, "null", class: "text-gray-400") if data.nil?
+      return content_tag(:span, "null", class: "text-gray-500") if data.nil?
       return content_tag(:span, JSON.generate(data), class: json_value_class(data)) unless data.is_a?(Hash) || data.is_a?(Array)
-      return content_tag(:span, collapsed_summary(data), class: "text-gray-400") if max_depth && depth >= max_depth
+      return content_tag(:span, collapsed_summary(data), class: "text-gray-500") if max_depth && depth >= max_depth
 
       if data.is_a?(Hash)
         render_hash_tree(data, depth, max_depth)
@@ -134,7 +131,7 @@ module RailsEventViewer
     end
 
     def render_hash_tree(hash, depth, max_depth)
-      return content_tag(:span, "{}", class: "text-gray-400") if hash.empty?
+      return content_tag(:span, "{}", class: "text-gray-500") if hash.empty?
 
       content_tag(:div, class: "pl-4") do
         hash.map do |key, value|
@@ -147,12 +144,12 @@ module RailsEventViewer
     end
 
     def render_array_tree(array, depth, max_depth)
-      return content_tag(:span, "[]", class: "text-gray-400") if array.empty?
+      return content_tag(:span, "[]", class: "text-gray-500") if array.empty?
 
       content_tag(:div, class: "pl-4") do
         array.each_with_index.map do |value, index|
           content_tag(:div, class: "py-0.5") do
-            content_tag(:span, "[#{index}]:", class: "text-gray-400 mr-2") +
+            content_tag(:span, "[#{index}]:", class: "text-gray-500 mr-2") +
               json_tree(value, depth: depth + 1, max_depth: max_depth)
           end
         end.join.html_safe
