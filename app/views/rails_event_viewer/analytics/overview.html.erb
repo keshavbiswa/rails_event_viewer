@@ -47,6 +47,7 @@
           <%= line_chart @events_over_time,
               id: "analytics-timeline",
               html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
+              content_for: nil,
               colors: ["#4F46E5"],
               library: {
                 plugins: { legend: { display: false } },
@@ -67,6 +68,7 @@
           <%= bar_chart @events_by_type,
               id: "analytics-by-type",
               html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
+              content_for: nil,
               colors: ["#4F46E5"],
               library: {
                 indexAxis: 'y',

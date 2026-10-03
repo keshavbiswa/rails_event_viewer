@@ -34,6 +34,7 @@
             <%= line_chart @events_over_time,
                 id: "events-timeline",
                 html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
+                content_for: nil,
                 colors: ["#4F46E5"],
                 library: { plugins: { legend: { display: false } } } %>
           <% else %>
@@ -52,6 +53,7 @@
             <%= pie_chart @events_by_type,
                 id: "events-by-type",
                 html: '<div id="%{id}" class="h-full w-full">%{loading}</div>',
+                content_for: nil,
                 donut: true,
                 colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16"] %>
           <% else %>
