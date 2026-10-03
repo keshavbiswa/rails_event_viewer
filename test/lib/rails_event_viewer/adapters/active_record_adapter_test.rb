@@ -148,13 +148,16 @@ module RailsEventViewer
         assert_nil @adapter.find_event(99999)
       end
 
-      test "delete_before removes old entries" do
+      test "delete_before removes old entries and clear! removes the rest" do
         Entry.create!(name: "old", occurred_at: 2.days.ago)
         Entry.create!(name: "new", occurred_at: 1.hour.ago)
 
         deleted = @adapter.delete_before(1.day.ago)
         assert_equal 1, deleted
         assert_equal 1, Entry.count
+
+        @adapter.clear!
+        assert_equal 0, Entry.count
       end
 
       test "events_over_time groups by hour" do

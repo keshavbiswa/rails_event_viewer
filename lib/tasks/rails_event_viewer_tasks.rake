@@ -57,7 +57,7 @@ namespace :rails_event_viewer do
 
     if adapter.respond_to?(:clear!)
       print "Are you sure you want to delete ALL events? [y/N] "
-      response = $stdin.gets.chomp.downcase
+      response = $stdin.gets.to_s.chomp.downcase
 
       if response == "y"
         adapter.clear!

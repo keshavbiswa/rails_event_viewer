@@ -57,6 +57,10 @@ module RailsEventViewer
         Entry.where("occurred_at < ?", timestamp).in_batches.delete_all
       end
 
+      def clear!
+        Entry.in_batches.delete_all
+      end
+
       def events_over_time(range:, interval:)
         Entry.where(occurred_at: range).group_by_period(interval, :occurred_at).count
       end
