@@ -1,4 +1,4 @@
-<% content_for(:title, "#{event_name(@event)} - Rails Event Viewer") %>
+<% content_for(:title, "#{@event[:name]} - Rails Event Viewer") %>
 
 <div class="space-y-6">
   <!-- Header -->
@@ -9,8 +9,8 @@
       </svg>
     <% end %>
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-gray-900 break-words"><%= event_name(@event) %></h1>
-      <p class="text-sm text-gray-500">Event ID: <%= event_id(@event) %></p>
+      <h1 class="text-2xl font-bold text-gray-900 break-words"><%= @event[:name] %></h1>
+      <p class="text-sm text-gray-500">Event ID: <%= @event[:id] %></p>
     </div>
   </div>
 
@@ -92,15 +92,15 @@
               </dd>
             </div>
           <% end %>
-          <% filepath = event_source_file(@event) %>
+          <% filepath = @event[:source_file] %>
           <% if filepath.present? %>
             <div class="px-6 py-4">
               <dt class="text-sm font-medium text-gray-500">Source Location</dt>
               <dd class="mt-1 text-sm text-gray-900">
                 <code class="bg-gray-100 px-2 py-1 rounded text-xs break-all">
-                  <%= filepath %>:<%= event_source_line(@event) %>
+                  <%= filepath %>:<%= @event[:source_line] %>
                 </code>
-                <% label = event_source_label(@event) %>
+                <% label = @event[:source_label] %>
                 <% if label.present? %>
                   <div class="mt-1 text-gray-600 text-xs"><%= label %></div>
                 <% end %>
@@ -120,12 +120,12 @@
           <ul class="divide-y divide-gray-200">
             <% @related_events.each do |related| %>
               <li class="px-6 py-3 hover:bg-gray-50">
-                <%= link_to rails_event_viewer.event_path(event_id(related)), class: "block" do %>
+                <%= link_to rails_event_viewer.event_path(related[:id]), class: "block" do %>
                   <div class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                    <%= event_name(related) %>
+                    <%= related[:name] %>
                   </div>
                   <div class="text-xs text-gray-500">
-                    <%= time_ago_with_title(event_occurred_at(related)) %>
+                    <%= time_ago_with_title(related[:occurred_at]) %>
                   </div>
                 <% end %>
               </li>
@@ -140,13 +140,13 @@
           <h2 class="text-lg font-medium text-gray-900">Quick Links</h2>
         </div>
         <div class="p-4 space-y-2">
-          <%= link_to rails_event_viewer.events_path(name: event_name(@event)),
+          <%= link_to rails_event_viewer.events_path(name: @event[:name]),
               class: "block text-sm text-indigo-600 hover:text-indigo-500" do %>
-            View all "<%= event_name(@event) %>" events
+            View all "<%= @event[:name] %>" events
           <% end %>
-          <%= link_to rails_event_viewer.event_type_path(name: event_name(@event)),
+          <%= link_to rails_event_viewer.event_type_path(name: @event[:name]),
               class: "block text-sm text-indigo-600 hover:text-indigo-500" do %>
-            View "<%= event_name(@event) %>" event type
+            View "<%= @event[:name] %>" event type
           <% end %>
         </div>
       </div>

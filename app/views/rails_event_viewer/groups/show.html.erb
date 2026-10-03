@@ -51,11 +51,11 @@
 
         <div class="divide-y divide-gray-100">
           <% @events.each_with_index do |event, index| %>
-            <a href="<%= rails_event_viewer.event_path(event_id(event)) %>" class="relative pl-16 pr-6 py-4 hover:bg-gray-50 block">
+            <a href="<%= rails_event_viewer.event_path(event[:id]) %>" class="relative pl-16 pr-6 py-4 hover:bg-gray-50 block">
               <div class="absolute left-10 top-6 w-4 h-4 rounded-full border-2 border-indigo-500 bg-white"></div>
 
-              <% if @first_event_at && event_occurred_at(event) %>
-                <% offset = event_occurred_at(event) - @first_event_at %>
+              <% if @first_event_at && event[:occurred_at] %>
+                <% offset = event[:occurred_at] - @first_event_at %>
                 <div class="absolute left-0 top-4 w-9 text-right">
                   <span class="text-xs text-gray-500" title="<%= format_duration(offset) %> from start">
                     <% if offset < 0.001 %>
@@ -75,7 +75,7 @@
                 <div class="flex-1 min-w-0">
                   <!-- Event name badge -->
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                    <%= event_name(event) %>
+                    <%= event[:name] %>
                   </span>
 
                   <!-- Payload preview -->
@@ -106,11 +106,11 @@
 
                 <div class="ml-4 flex-shrink-0 text-right">
                   <p class="text-sm text-gray-500">
-                    <%= time_ago_with_title(event_occurred_at(event)) %>
+                    <%= time_ago_with_title(event[:occurred_at]) %>
                   </p>
-                  <% if event_source_file(event).present? %>
+                  <% if event[:source_file].present? %>
                     <p class="text-xs text-gray-500 mt-1">
-                      <%= event_short_filepath(event) %>:<%= event_source_line(event) %>
+                      <%= event_short_filepath(event) %>:<%= event[:source_line] %>
                     </p>
                   <% end %>
                 </div>

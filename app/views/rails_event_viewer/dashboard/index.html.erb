@@ -85,16 +85,16 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% @recent_events.each do |event| %>
-              <tr class="hover:bg-gray-50 cursor-pointer" data-event-viewer-href="<%= rails_event_viewer.event_path(event_id(event)) %>">
+              <tr class="hover:bg-gray-50 cursor-pointer" data-event-viewer-href="<%= rails_event_viewer.event_path(event[:id]) %>">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <%= link_to event_name(event), rails_event_viewer.event_path(event_id(event)),
+                  <%= link_to event[:name], rails_event_viewer.event_path(event[:id]),
                         class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800" %>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
                   <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 60) %></code>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <%= time_ago_with_title(event_occurred_at(event)) %>
+                  <%= time_ago_with_title(event[:occurred_at]) %>
                 </td>
               </tr>
             <% end %>

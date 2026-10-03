@@ -6,13 +6,6 @@ module RailsEventViewer
       module InMemoryFiltering
         extend ActiveSupport::Concern
 
-        def distinct_group_values(key, source: :context)
-          in_memory_events
-            .map { |e| group_value_for(e, key, source) }
-            .compact
-            .uniq
-        end
-
         def group_instances(key, source: :context, limit: 100)
           in_memory_events
             .group_by { |e| group_value_for(e, key, source).to_s }

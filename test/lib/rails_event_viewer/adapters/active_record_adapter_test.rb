@@ -227,30 +227,6 @@ module RailsEventViewer
         assert_equal [], stats
       end
 
-      test "distinct_group_values returns unique context values for a key" do
-        Entry.create!(name: "test", context: { "request_id" => "req-1" }, occurred_at: Time.current)
-        Entry.create!(name: "test", context: { "request_id" => "req-1" }, occurred_at: Time.current)
-        Entry.create!(name: "test", context: { "request_id" => "req-2" }, occurred_at: Time.current)
-
-        values = @adapter.distinct_group_values("request_id", source: :context)
-
-        assert_includes values, "req-1"
-        assert_includes values, "req-2"
-        assert_equal 2, values.size
-      end
-
-      test "distinct_group_values returns unique tag values for a key" do
-        Entry.create!(name: "test", tags: { "env" => "production" }, occurred_at: Time.current)
-        Entry.create!(name: "test", tags: { "env" => "production" }, occurred_at: Time.current)
-        Entry.create!(name: "test", tags: { "env" => "staging" }, occurred_at: Time.current)
-
-        values = @adapter.distinct_group_values("env", source: :tags)
-
-        assert_includes values, "production"
-        assert_includes values, "staging"
-        assert_equal 2, values.size
-      end
-
       test "group_instances returns stats grouped by context key" do
         travel_to Time.zone.local(2026, 1, 1, 12, 0, 0) do
           3.times { Entry.create!(name: "test", context: { "request_id" => "req-1" }, occurred_at: Time.current) }

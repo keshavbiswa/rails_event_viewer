@@ -124,24 +124,6 @@ module RailsEventViewer
       assert_match(/Alice/, result)
     end
 
-    test "#event_attribute with model" do
-      event = Entry.new(name: "test.event")
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
-    test "event_attribute with hash symbol key" do
-      event = { name: "test.event" }
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
-    test "event_attribute with hash string key" do
-      event = { "name" => "test.event" }
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
     test "#format_duration with nil returns dash" do
       assert_equal "-", format_duration(nil)
     end
@@ -183,19 +165,6 @@ module RailsEventViewer
       result = format_duration(86400)
 
       assert_equal "1 day", result
-    end
-
-    test "#event_id with model" do
-      event = Entry.new
-      event.id = 123
-
-      assert_equal 123, event_id(event)
-    end
-
-    test "#event_name with model" do
-      event = Entry.new(name: "test.event")
-
-      assert_equal "test.event", event_name(event)
     end
 
     test "#event_payload with model" do

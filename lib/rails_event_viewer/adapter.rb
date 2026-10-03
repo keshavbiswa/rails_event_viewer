@@ -10,10 +10,6 @@ module RailsEventViewer
       true
     end
 
-    def supports_retention?
-      true
-    end
-
     def write_events(events)
       raise NotImplementedError, "#{self.class} must implement #write_events"
     end
@@ -57,10 +53,6 @@ module RailsEventViewer
       distinct_event_names.map do |name|
         build_event_type_stats(name)
       end.sort_by { |s| -s[:count] }
-    end
-
-    def distinct_group_values(key, source: :context)
-      raise NotImplementedError, "#{self.class} must implement #distinct_group_values"
     end
 
     def group_instances(key, source: :context, limit: 100)
