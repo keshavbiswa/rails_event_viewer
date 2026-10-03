@@ -49,6 +49,20 @@ module RailsEventViewer
         end
       end
 
+      test "transactional = false leaves the surrounding transaction usable after a failed write" do
+        RailsEventViewer.transactional = false
+        Entry.transaction do
+          assert_raises(::ActiveRecord::NotNullViolation) do
+            @adapter.write_events([{ name: nil, occurred_at: Time.current }])
+          end
+          Entry.create!(name: "after.failure", occurred_at: Time.current)
+        end
+
+        assert Entry.exists?(name: "after.failure")
+      ensure
+        RailsEventViewer.transactional = true
+      end
+
       test "fetch_events returns entries ordered by occurred_at desc" do
         Entry.create!(name: "old", occurred_at: 2.hours.ago)
         Entry.create!(name: "new", occurred_at: 1.hour.ago)

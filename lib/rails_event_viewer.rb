@@ -14,6 +14,7 @@ module RailsEventViewer
   mattr_accessor :buffer_size, default: 100 # Flush after N events
   mattr_accessor :flush_interval, default: 2 # Flush every N seconds
   mattr_accessor :sample_rate, default: 1.0 # 1.0 = 100%, 0.1 = 10%
+  mattr_accessor :transactional, default: true # false = a failed sync write does not abort the caller's transaction
   mattr_accessor :buffer, default: Buffers::Memory.new
 
   mattr_accessor :retention_period, default: 7.days

@@ -27,7 +27,9 @@ module RailsEventViewer
           }
         end
 
-        Entry.insert_all(records, returning: false)
+        Entry.transaction(requires_new: !RailsEventViewer.transactional) do
+          Entry.insert_all(records, returning: false)
+        end
       end
 
       def fetch_events(relation)

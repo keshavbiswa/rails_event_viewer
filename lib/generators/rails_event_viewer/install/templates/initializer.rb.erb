@@ -49,6 +49,10 @@ RailsEventViewer.configure do |config|
   # Useful for high-volume production environments
   # config.sample_rate = 1.0
 
+  # With async = false, events are written inside the transaction. By default a failed
+  # write aborts it. Set to false to run each write in a savepoint so host's own writes survive.
+  # config.transactional = true
+
   # ==========================================================================
   # General Configuration
   # ==========================================================================
