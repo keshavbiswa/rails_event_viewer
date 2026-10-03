@@ -24,10 +24,6 @@ module RailsEventViewer
         @max_events = max_events
       end
 
-      def supports_retention?
-        true
-      end
-
       def write_events(new_events)
         return if new_events.empty?
 

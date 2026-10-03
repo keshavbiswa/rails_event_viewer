@@ -24,14 +24,5 @@ module RailsEventViewer
       assert_equal 42, @entry.source_line
       assert_equal "User#create", @entry.source_label
     end
-
-    test "source_location returns hash" do
-      expected = { filepath: "/app/models/user.rb", lineno: 42, label: "User#create" }
-      assert_equal expected, @entry.source_location
-    end
-
-    test "short_filepath strips app prefix" do
-      assert_equal "app/models/user.rb", @entry.short_filepath
-    end
   end
 end

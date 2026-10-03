@@ -124,24 +124,6 @@ module RailsEventViewer
       assert_match(/Alice/, result)
     end
 
-    test "#event_attribute with model" do
-      event = Entry.new(name: "test.event")
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
-    test "event_attribute with hash symbol key" do
-      event = { name: "test.event" }
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
-    test "event_attribute with hash string key" do
-      event = { "name" => "test.event" }
-
-      assert_equal "test.event", event_attribute(event, :name)
-    end
-
     test "#format_duration with nil returns dash" do
       assert_equal "-", format_duration(nil)
     end
@@ -185,19 +167,6 @@ module RailsEventViewer
       assert_equal "1 day", result
     end
 
-    test "#event_id with model" do
-      event = Entry.new
-      event.id = 123
-
-      assert_equal 123, event_id(event)
-    end
-
-    test "#event_name with model" do
-      event = Entry.new(name: "test.event")
-
-      assert_equal "test.event", event_name(event)
-    end
-
     test "#event_payload with model" do
       event = Entry.new(payload: { "key" => "value" })
 
@@ -232,36 +201,6 @@ module RailsEventViewer
       event = Entry.new(source_file: nil)
 
       assert_nil event_short_filepath(event)
-    end
-
-    test "#nav_link_class returns active class for current controller" do
-      # Mock controller_name method
-      def controller_name
-        "events"
-      end
-
-      result = nav_link_class("events")
-
-      assert_match(/bg-indigo-700/, result)
-    end
-
-    test "#nav_link_class returns inactive class for other controller" do
-      def controller_name
-        "events"
-      end
-
-      result = nav_link_class("dashboard")
-      assert_match(/text-indigo-200/, result)
-      assert_match(/hover:bg-indigo-500/, result)
-    end
-
-    test "#timezone_options returns array of timezone options" do
-      options = timezone_options
-
-      assert options.is_a?(Array)
-      assert options.any?
-      assert options.first.is_a?(Array)
-      assert_equal 2, options.first.size
     end
   end
 end

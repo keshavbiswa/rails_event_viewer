@@ -44,5 +44,11 @@ module RailsEventViewer
       assert_equal [26, 50], [page.from, page.to]
       assert_nil page.next
     end
+
+    test "window shows the first, last and nearby pages with gaps between" do
+      assert_equal [1, :gap, 48, 49, 50, 51, 52, :gap, 100], Page.new(count: 100, per_page: 1, page: 50).window
+      assert_equal [1, 2, 3, 4, 5, 6], Page.new(count: 6, per_page: 1, page: 4).window
+      assert_equal [1], Page.new(count: 0, per_page: 25, page: 1).window
+    end
   end
 end

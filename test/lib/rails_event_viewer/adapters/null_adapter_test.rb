@@ -9,7 +9,6 @@ module RailsEventViewer
       end
 
       test "group methods return empty results" do
-        assert_equal [], @adapter.distinct_group_values(:request_id)
         assert_equal [], @adapter.group_instances(:request_id, source: :tags)
       end
 
@@ -59,10 +58,6 @@ module RailsEventViewer
 
       test "supports_analytics? returns false" do
         refute @adapter.supports_analytics?
-      end
-
-      test "supports_retention? returns false" do
-        refute @adapter.supports_retention?
       end
     end
   end

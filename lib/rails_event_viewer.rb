@@ -76,6 +76,10 @@ module RailsEventViewer
       subscriber.stop!
     end
 
+    def effective_logger
+      logger || (defined?(Rails) && Rails.logger) || (@fallback_logger ||= Logger.new($stdout))
+    end
+
     private
 
     def build_adapter
@@ -101,17 +105,13 @@ module RailsEventViewer
 
       if storage_adapter == :active_record && !adapter_instance.table_exists?
         effective_logger.warn "[RailsEventViewer] Table 'rails_event_viewer_entries' not found. " \
-                              "Run `rails rails_event_viewer:install:migrations` and `rails db:migrate`. " \
+                              "Run `bin/rails generate rails_event_viewer:install` and `bin/rails db:migrate`. " \
                               "Falling back to NullAdapter (events will not be persisted)."
         require "rails_event_viewer/adapters/null"
         Adapters::Null.new
       else
         adapter_instance
       end
-    end
-
-    def effective_logger
-      logger || (defined?(Rails) && Rails.logger) || Logger.new($stdout)
     end
   end
 end

@@ -54,8 +54,8 @@ module RailsEventViewer
     end
 
     test "since filters by time" do
-      old_event = Entry.create!(name: "old", occurred_at: 2.days.ago)
-      new_event = Entry.create!(name: "new", occurred_at: 1.hour.ago)
+      Entry.create!(name: "old", occurred_at: 2.days.ago)
+      Entry.create!(name: "new", occurred_at: 1.hour.ago)
 
       results = @relation.since(1.day.ago).to_a
       assert_equal 1, results.size
@@ -63,8 +63,8 @@ module RailsEventViewer
     end
 
     test "until filters by time" do
-      old_event = Entry.create!(name: "old", occurred_at: 2.days.ago)
-      new_event = Entry.create!(name: "new", occurred_at: 1.hour.ago)
+      Entry.create!(name: "old", occurred_at: 2.days.ago)
+      Entry.create!(name: "new", occurred_at: 1.hour.ago)
 
       results = @relation.until(1.day.ago).to_a
       assert_equal 1, results.size

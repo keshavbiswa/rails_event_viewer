@@ -204,10 +204,6 @@ module RailsEventViewer
         assert_equal 0, @adapter.size
       end
 
-      test "supports_retention? returns true" do
-        assert @adapter.supports_retention?
-      end
-
       test "fetch_events filters by tags with symbol keys" do
         @adapter.write_events([
           { name: "event1", tags: { env: "prod" }, occurred_at: Time.current },

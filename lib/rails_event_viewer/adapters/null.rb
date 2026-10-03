@@ -11,10 +11,6 @@ module RailsEventViewer
         false
       end
 
-      def supports_retention?
-        false
-      end
-
       def write_events(events)
         nil
       end
@@ -49,10 +45,6 @@ module RailsEventViewer
 
       def count_since(since)
         0
-      end
-
-      def distinct_group_values(key, source: :context)
-        []
       end
 
       def group_instances(key, source: :context, limit: 100)

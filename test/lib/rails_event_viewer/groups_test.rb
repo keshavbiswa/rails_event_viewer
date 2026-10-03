@@ -69,30 +69,6 @@ module RailsEventViewer
       assert_equal "db.query", events.first[:name]
     end
 
-    test "distinct_group_values returns unique values for context key" do
-      values = @adapter.distinct_group_values("request_id", source: :context)
-
-      assert_includes values, "req-123"
-      assert_includes values, "req-456"
-      assert_equal 2, values.size
-    end
-
-    test "distinct_group_values returns unique values for tag key" do
-      values = @adapter.distinct_group_values("env", source: :tags)
-
-      assert_includes values, "test"
-      assert_equal 1, values.size
-    end
-
-    test "distinct_group_values omits events missing the key" do
-      @adapter.write_events([{ name: "no.context", context: {}, occurred_at: Time.current }])
-
-      values = @adapter.distinct_group_values("request_id", source: :context)
-
-      refute_includes values, nil
-      assert_equal 2, values.size
-    end
-
     test "group_instances returns statistics grouped by context key" do
       stats = @adapter.group_instances("request_id", source: :context)
 

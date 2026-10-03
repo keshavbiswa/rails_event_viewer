@@ -8,6 +8,9 @@ A Rails engine that captures events emitted with `Rails.event` and gives you a d
 
 - Rails 8.1+
 - Ruby 3.3+
+- SQLite, PostgreSQL, or MySQL 8 for the default ActiveRecord adapter
+
+API-only apps need an asset pipeline to serve the dashboard's CSS and JavaScript. Add `gem "propshaft"`, and run `assets:precompile` when you deploy.
 
 ## Installation
 
@@ -129,6 +132,8 @@ production:
 ```
 
 ## Development
+
+The dashboard ships Chart.js 4.4.1, chartjs-adapter-date-fns 3.0.0 and Chartkick.js 5.0.1.
 
 ```bash
 bundle install

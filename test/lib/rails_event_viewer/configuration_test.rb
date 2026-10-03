@@ -97,21 +97,6 @@ module RailsEventViewer
       refute_same adapter1, adapter2
     end
 
-    test "sample_rate defaults to 1.0" do
-      RailsEventViewer.sample_rate = 1.0
-      assert_equal 1.0, RailsEventViewer.sample_rate
-    end
-
-    test "retention_period defaults to 7 days" do
-      RailsEventViewer.retention_period = 7.days
-      assert_equal 7.days, RailsEventViewer.retention_period
-    end
-
-    test "per_page defaults to 25" do
-      RailsEventViewer.per_page = 25
-      assert_equal 25, RailsEventViewer.per_page
-    end
-
     test "http_basic_auth_enabled defaults to false" do
       assert_equal false, RailsEventViewer.http_basic_auth_enabled
     end

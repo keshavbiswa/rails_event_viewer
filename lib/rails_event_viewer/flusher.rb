@@ -56,7 +56,7 @@ module RailsEventViewer
       if @thread&.alive?
         @flush_requests << true
         @thread.join(shutdown_timeout)
-        effective_logger&.warn("[RailsEventViewer] Flusher thread still busy after #{shutdown_timeout}s writing #{@writing} events") if @thread.alive?
+        RailsEventViewer.effective_logger.warn("[RailsEventViewer] Flusher thread still busy after #{shutdown_timeout}s writing #{@writing} events") if @thread.alive?
       end
 
       @mutex.synchronize { @thread = nil }
@@ -72,7 +72,7 @@ module RailsEventViewer
 
       report_dropped_events
       leftover = @buffer.size
-      effective_logger&.warn("[RailsEventViewer] #{leftover} events still buffered at shutdown") if leftover.positive?
+      RailsEventViewer.effective_logger.warn("[RailsEventViewer] #{leftover} events still buffered at shutdown") if leftover.positive?
     end
 
     def running?
@@ -126,7 +126,7 @@ module RailsEventViewer
       end
       return if dropped.zero?
 
-      effective_logger&.warn("[RailsEventViewer] Dropped #{dropped} events because the buffer was full")
+      RailsEventViewer.effective_logger.warn("[RailsEventViewer] Dropped #{dropped} events because the buffer was full")
     end
 
     def request_flush
@@ -143,7 +143,7 @@ module RailsEventViewer
     end
 
     def run_loop
-      effective_logger&.debug("[RailsEventViewer] Flusher thread started (PID: #{Process.pid})")
+      RailsEventViewer.effective_logger.debug("[RailsEventViewer] Flusher thread started (PID: #{Process.pid})")
 
       until shutdown_requested?
         begin
@@ -157,7 +157,7 @@ module RailsEventViewer
         end
       end
 
-      effective_logger&.debug("[RailsEventViewer] Flusher thread stopped (PID: #{Process.pid})")
+      RailsEventViewer.effective_logger.debug("[RailsEventViewer] Flusher thread stopped (PID: #{Process.pid})")
     end
 
     def wait_for_flush

@@ -3,10 +3,6 @@ module RailsEventViewer
     class ActiveRecord
       include Adapter
 
-      def initialize(**options)
-        @options = options
-      end
-
       def table_exists?
         Entry.table_exists?
       rescue ::ActiveRecord::NoDatabaseError
@@ -16,7 +12,6 @@ module RailsEventViewer
       def write_events(events)
         return if events.empty?
 
-        # Use insert_all for bulk inserts (more efficient)
         records = events.map do |event|
           {
             name: event[:name],
@@ -32,7 +27,7 @@ module RailsEventViewer
           }
         end
 
-        Entry.insert_all(records)
+        Entry.insert_all(records, returning: false)
       end
 
       def fetch_events(relation)
@@ -88,16 +83,6 @@ module RailsEventViewer
           end
       end
 
-      def distinct_group_values(key, source: :context)
-        column = source == :tags ? :tags : :context
-        json_path = JsonQuery.extract_path(column, key)
-
-        Entry
-          .where(JsonQuery.extract_path_present(column, key))
-          .distinct
-          .pluck(Arel.sql(json_path))
-      end
-
       def group_instances(key, source: :context, limit: 100)
         column = source == :tags ? :tags : :context
         json_path = JsonQuery.extract_path(column, key)
@@ -148,39 +133,18 @@ module RailsEventViewer
       end
 
       def build_scope(relation)
-        scope = Entry.order(occurred_at: :desc)
-        scope = apply_name_filters(scope, relation)
-        scope = apply_tag_filters(scope, relation)
-        scope = apply_context_filters(scope, relation)
+        scope = Entry.order(occurred_at: :desc, id: :desc)
+        scope = scope.where(name: relation.names) if relation.names.present?
+        scope = apply_json_filters(scope, :tags, relation.tags)
+        scope = apply_json_filters(scope, :context, relation.contexts)
         scope = apply_time_filters(scope, relation)
         scope = apply_search(scope, relation)
         scope
       end
 
-      def apply_name_filters(scope, relation)
-        return scope if relation.names.blank?
-
-        if relation.names.size == 1
-          scope.where(name: relation.names.first)
-        else
-          scope.where(name: relation.names)
-        end
-      end
-
-      def apply_tag_filters(scope, relation)
-        return scope if relation.tags.blank?
-
-        relation.tags.each do |key, value|
-          scope = scope.where(*JsonQuery.contains(:tags, key, value))
-        end
-        scope
-      end
-
-      def apply_context_filters(scope, relation)
-        return scope if relation.contexts.blank?
-
-        relation.contexts.each do |key, value|
-          scope = scope.where(*JsonQuery.contains(:context, key, value))
+      def apply_json_filters(scope, column, filters)
+        filters.each do |key, value|
+          scope = scope.where(*JsonQuery.contains(column, key, value))
         end
         scope
       end

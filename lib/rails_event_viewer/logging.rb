@@ -3,17 +3,7 @@ module RailsEventViewer
     private
 
     def log_error(message)
-      logger = effective_logger
-
-      if logger
-        logger.error(message)
-      else
-        warn message
-      end
-    end
-
-    def effective_logger
-      RailsEventViewer.logger || (defined?(Rails) && Rails.logger)
+      RailsEventViewer.effective_logger.error(message)
     end
   end
 end

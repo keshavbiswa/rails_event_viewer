@@ -34,6 +34,18 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check the compiled CSS is up to date
+        run: |
+          npm ci
+          npm run build:css
+          git diff --exit-code app/assets/stylesheets
+
   test:
     runs-on: ubuntu-latest
     strategy:

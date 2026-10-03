@@ -1,16 +1,16 @@
-<% content_for(:title, "#{event_name(@event)} - Rails Event Viewer") %>
+<% content_for(:title, "#{@event[:name]} - Rails Event Viewer") %>
 
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center space-x-4">
-    <%= link_to rails_event_viewer.events_path, class: "text-gray-400 hover:text-gray-600", aria: { label: "Back to events" } do %>
-      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <%= link_to rails_event_viewer.events_path, class: "text-gray-500 hover:text-gray-700", aria: { label: "Back to events" } do %>
+      <svg aria-hidden="true" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     <% end %>
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-gray-900 break-words"><%= event_name(@event) %></h1>
-      <p class="text-sm text-gray-500">Event ID: <%= event_id(@event) %></p>
+      <h1 class="text-2xl font-bold text-gray-900 break-words"><%= @event[:name] %></h1>
+      <p class="text-sm text-gray-500">Event ID: <%= @event[:id] %></p>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
       <!-- Payload -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 class="text-lg font-medium text-gray-900">Payload</h3>
+          <h2 class="text-lg font-medium text-gray-900">Payload</h2>
           <button type="button"
                   data-event-viewer-copy="<%= JSON.generate(event_payload(@event)) %>"
                   class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
@@ -34,7 +34,7 @@
               <%= json_tree(payload) %>
             </div>
           <% else %>
-            <span class="text-gray-400">Empty payload</span>
+            <span class="text-gray-500">Empty payload</span>
           <% end %>
         </div>
       </div>
@@ -44,7 +44,7 @@
       <% if tags.present? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Tags</h3>
+            <h2 class="text-lg font-medium text-gray-900">Tags</h2>
           </div>
           <div class="p-6">
             <div class="font-mono text-sm break-words">
@@ -59,7 +59,7 @@
       <% if context.present? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Context</h3>
+            <h2 class="text-lg font-medium text-gray-900">Context</h2>
           </div>
           <div class="p-6">
             <div class="font-mono text-sm break-words">
@@ -75,7 +75,7 @@
       <!-- Metadata -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900">Metadata</h3>
+          <h2 class="text-lg font-medium text-gray-900">Metadata</h2>
         </div>
         <dl class="divide-y divide-gray-200">
           <div class="px-6 py-4">
@@ -92,15 +92,15 @@
               </dd>
             </div>
           <% end %>
-          <% filepath = event_source_file(@event) %>
+          <% filepath = @event[:source_file] %>
           <% if filepath.present? %>
             <div class="px-6 py-4">
               <dt class="text-sm font-medium text-gray-500">Source Location</dt>
               <dd class="mt-1 text-sm text-gray-900">
                 <code class="bg-gray-100 px-2 py-1 rounded text-xs break-all">
-                  <%= filepath %>:<%= event_source_line(@event) %>
+                  <%= filepath %>:<%= @event[:source_line] %>
                 </code>
-                <% label = event_source_label(@event) %>
+                <% label = @event[:source_label] %>
                 <% if label.present? %>
                   <div class="mt-1 text-gray-600 text-xs"><%= label %></div>
                 <% end %>
@@ -114,18 +114,18 @@
       <% if @related_events.any? %>
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Related Events</h3>
+            <h2 class="text-lg font-medium text-gray-900">Related Events</h2>
             <p class="text-xs text-gray-500">Same request context</p>
           </div>
           <ul class="divide-y divide-gray-200">
             <% @related_events.each do |related| %>
               <li class="px-6 py-3 hover:bg-gray-50">
-                <%= link_to rails_event_viewer.event_path(event_id(related)), class: "block" do %>
+                <%= link_to rails_event_viewer.event_path(related[:id]), class: "block" do %>
                   <div class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                    <%= event_name(related) %>
+                    <%= related[:name] %>
                   </div>
                   <div class="text-xs text-gray-500">
-                    <%= time_ago_with_title(event_occurred_at(related)) %>
+                    <%= time_ago_with_title(related[:occurred_at]) %>
                   </div>
                 <% end %>
               </li>
@@ -137,16 +137,16 @@
       <!-- Quick Links -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900">Quick Links</h3>
+          <h2 class="text-lg font-medium text-gray-900">Quick Links</h2>
         </div>
         <div class="p-4 space-y-2">
-          <%= link_to rails_event_viewer.events_path(name: event_name(@event)),
+          <%= link_to rails_event_viewer.events_path(name: @event[:name]),
               class: "block text-sm text-indigo-600 hover:text-indigo-500" do %>
-            View all "<%= event_name(@event) %>" events
+            View all "<%= @event[:name] %>" events
           <% end %>
-          <%= link_to rails_event_viewer.event_type_path(name: event_name(@event)),
+          <%= link_to rails_event_viewer.event_type_path(name: @event[:name]),
               class: "block text-sm text-indigo-600 hover:text-indigo-500" do %>
-            View "<%= event_name(@event) %>" event type
+            View "<%= @event[:name] %>" event type
           <% end %>
         </div>
       </div>

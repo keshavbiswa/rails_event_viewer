@@ -26,10 +26,6 @@ module RailsEventViewer
         @max_events = max_events
       end
 
-      def supports_analytics?
-        true
-      end
-
       def write_events(events)
         return if events.empty?
 
@@ -57,7 +53,7 @@ module RailsEventViewer
 
       def fetch_events(relation)
         if relation.filtered?
-          return fetch_all_filtered(relation).drop(relation.offset_value).take(relation.limit_value)
+          return filter_events(in_memory_events, relation).drop(relation.offset_value).take(relation.limit_value)
         end
 
         start_idx = relation.offset_value
@@ -68,7 +64,7 @@ module RailsEventViewer
 
       def count_events(relation)
         if relation.filtered?
-          fetch_all_filtered(relation).size
+          filter_events(in_memory_events, relation).size
         else
           @redis.with { |conn| conn.zcard(events_key) }
         end
@@ -171,18 +167,8 @@ module RailsEventViewer
         data
       end
 
-      def fetch_all_events
-        serialized_events = @redis.with { |conn| conn.zrevrange(events_key, 0, -1) }
-        serialized_events.map { |json| deserialize_event(json) }
-      end
-
-      def fetch_all_filtered(relation)
-        events = fetch_all_events
-        filter_events(events, relation)
-      end
-
       def in_memory_events
-        fetch_all_events
+        @redis.with { |conn| conn.zrevrange(events_key, 0, -1) }.map { |json| deserialize_event(json) }
       end
     end
   end
