@@ -85,9 +85,8 @@
             <% @recent_events.each do |event| %>
               <tr class="hover:bg-gray-50 cursor-pointer" data-event-viewer-href="<%= rails_event_viewer.event_path(event_id(event)) %>">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                    <%= event_name(event) %>
-                  </span>
+                  <%= link_to event_name(event), rails_event_viewer.event_path(event_id(event)),
+                        class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800" %>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
                   <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 60) %></code>
