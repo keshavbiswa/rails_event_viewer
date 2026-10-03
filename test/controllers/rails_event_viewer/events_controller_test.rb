@@ -120,11 +120,26 @@ module RailsEventViewer
       assert_response :success
     end
 
-    test "index ignores unparseable dates instead of crashing" do
-      get rails_event_viewer.events_path(start_date: "garbage", end_date: "2026-13-45")
-      assert_response :success
+    test "index ignores malformed params instead of crashing" do
+      [
+        { start_date: "garbage", end_date: "2026-13-45" },
+        { start_date: ["2026-01-01"] },
+        { start_date: "1" * 200 },
+        { start_date: "999999999-01-01" },
+        { page: ["1"] },
+        { per_page: ["1"] },
+        { name: { a: "b" } },
+        { q: ["x"] },
+        { tag_key: "environment", tag_value: %w[a b] },
+        { context_key: ["request_id"], context_value: { a: "b" } }
+      ].each do |params|
+        get rails_event_viewer.events_path, params: params
 
-      get rails_event_viewer.events_path, params: { start_date: ["2026-01-01"] }
+        assert_response :success, params.inspect
+      end
+
+      get rails_event_viewer.analytics_overview_path, params: { start_date: "1" * 200, end_date: ["x"] }
+
       assert_response :success
     end
 
