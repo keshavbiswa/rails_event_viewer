@@ -107,6 +107,21 @@ module RailsEventViewer
       assert_select "input[type=hidden][name=q][value=test]"
     end
 
+    test "an empty list says why: filters matched nothing, or the table is missing" do
+      get rails_event_viewer.events_path(tag_key: "nope")
+
+      assert_includes response.body, "Try adjusting your filters"
+      assert_select "a", text: "Analytics"
+
+      require "rails_event_viewer/adapters/null"
+      RailsEventViewer.instance_variable_set(:@adapter, Adapters::Null.new)
+      get rails_event_viewer.events_path
+
+      assert_includes response.body, "Events will appear here"
+      assert_select "[role=alert]", /events table is missing/
+      assert_select "a", text: "Analytics", count: 0
+    end
+
     test "index ignores malformed params instead of crashing" do
       [
         { start_date: "garbage", end_date: "2026-13-45" },

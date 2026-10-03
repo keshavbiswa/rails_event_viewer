@@ -16,8 +16,10 @@
               class: nav_link_class("event_types") %>
           <%= link_to "Groups", rails_event_viewer.groups_path,
               class: nav_link_class("groups") %>
-          <%= link_to "Analytics", rails_event_viewer.analytics_overview_path,
-              class: nav_link_class("analytics") %>
+          <% if analytics_supported? %>
+            <%= link_to "Analytics", rails_event_viewer.analytics_overview_path,
+                class: nav_link_class("analytics") %>
+          <% end %>
         </div>
       </div>
 

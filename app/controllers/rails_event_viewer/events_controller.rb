@@ -2,6 +2,7 @@ module RailsEventViewer
   class EventsController < ApplicationController
     def index
       relation = apply_filters(RailsEventViewer.events)
+      @filtered = relation.filtered?
       @pagination, @events = paginate(relation)
       @event_names = current_adapter.distinct_event_names
     end

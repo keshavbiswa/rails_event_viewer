@@ -11,7 +11,7 @@
       <% end %>
     </h1>
     <div class="text-sm text-gray-500">
-      <%= @pagination.count %> total events
+      <%= @pagination.count %> events
     </div>
   </div>
 
@@ -51,7 +51,7 @@
               </svg>
               <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
               <p class="mt-1 text-sm text-gray-500">
-                <% if @query.present? || params[:name].present? %>
+                <% if @filtered %>
                   Try adjusting your filters or search query.
                 <% else %>
                   Events will appear here once they are captured.
