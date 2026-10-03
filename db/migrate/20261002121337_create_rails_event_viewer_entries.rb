@@ -18,7 +18,6 @@ class CreateRailsEventViewerEntries < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :rails_event_viewer_entries, :name
     add_index :rails_event_viewer_entries, :occurred_at
     add_index :rails_event_viewer_entries, [:name, :occurred_at]
 

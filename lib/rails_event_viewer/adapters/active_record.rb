@@ -32,7 +32,7 @@ module RailsEventViewer
           }
         end
 
-        Entry.insert_all(records)
+        Entry.insert_all(records, returning: false)
       end
 
       def fetch_events(relation)
@@ -148,7 +148,7 @@ module RailsEventViewer
       end
 
       def build_scope(relation)
-        scope = Entry.order(occurred_at: :desc)
+        scope = Entry.order(occurred_at: :desc, id: :desc)
         scope = apply_name_filters(scope, relation)
         scope = apply_tag_filters(scope, relation)
         scope = apply_context_filters(scope, relation)
