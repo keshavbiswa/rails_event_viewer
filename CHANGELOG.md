@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.1 (2026-10-03)
+
+Changed:
+
+- The nav search goes to the events list and works together with the filters. The `/events/search` page is removed.
+- The Analytics link is hidden when the adapter has no analytics.
+- The group page no longer shows an Event Types count. It counted only the current page.
+
+Fixed:
+
+- Array, hash and invalid values in query params are ignored instead of raising.
+- Event rows contain a real link, so keyboard and new-tab clicks work. Selecting text in a row no longer opens the event.
+- `rails_event_viewer:clear` works with the ActiveRecord adapter.
+- Redis keeps event times to the microsecond, and `delete_before` keeps an event at the exact cutoff.
+- Payloads show `&`, `<` and `>` instead of unicode escapes.
+- A banner explains a missing events table. A filtered empty list says no events match.
+- Pages fit narrow screens, and long names and payloads wrap.
+- Charts render when the host app sets its own Chartkick `content_for`.
+- `with_name` accepts a symbol.
+
 ## 0.3.0 (2026-10-02)
 
 Breaking:
