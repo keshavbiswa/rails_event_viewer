@@ -22,7 +22,7 @@
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 class="text-lg font-medium text-gray-900">Payload</h3>
           <button type="button"
-                  data-event-viewer-copy="<%= event_payload(@event).to_json %>"
+                  data-event-viewer-copy="<%= JSON.generate(event_payload(@event)) %>"
                   class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
             Copy
           </button>
