@@ -18,7 +18,7 @@ module RailsEventViewer
     end
 
     def with_name(*event_names)
-      event_names = event_names.flatten.compact
+      event_names = event_names.flatten.compact.map(&:to_s)
       return self if event_names.empty?
 
       clone_with { |rel| rel.names.concat(event_names) }

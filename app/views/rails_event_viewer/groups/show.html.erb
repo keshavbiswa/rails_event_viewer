@@ -19,15 +19,11 @@
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-1 gap-5 sm:grid-cols-4">
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
     <%= render "rails_event_viewer/shared/stat_card",
         title: "Total Events",
         value: number_with_delimiter(@total_count),
         icon: "database" %>
-    <%= render "rails_event_viewer/shared/stat_card",
-        title: "Event Types",
-        value: @event_names.size,
-        icon: "tag" %>
     <%= render "rails_event_viewer/shared/stat_card",
         title: "Duration",
         value: @duration ? format_duration(@duration) : "-",

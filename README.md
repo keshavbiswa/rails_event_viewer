@@ -43,6 +43,7 @@ RailsEventViewer.events
 ```
 
 Other filters: `with_context`, `search`, `until`, `offset`, and `count`.
+Without `limit`, a query returns `config.per_page` events, 25 by default.
 
 ## Configuration
 
@@ -89,6 +90,8 @@ config.authentication = ->(controller) {
 ```
 
 Set `RAILS_ENV` on every server. Without it, Rails falls back to development and the dashboard is open.
+
+If both are set, HTTP Basic Auth is used and `config.authentication` is ignored.
 
 ## Storage adapters
 

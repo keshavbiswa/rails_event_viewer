@@ -104,6 +104,7 @@ module RailsEventViewer
 
       result = @relation.first
       assert_equal "second", result.name
+      assert_equal %w[first], @relation.with_name(:first).to_a.map(&:name)
     end
 
     test "any? returns true when events exist" do
