@@ -254,14 +254,5 @@ module RailsEventViewer
       assert_match(/text-indigo-200/, result)
       assert_match(/hover:bg-indigo-500/, result)
     end
-
-    test "#timezone_options returns array of timezone options" do
-      options = timezone_options
-
-      assert options.is_a?(Array)
-      assert options.any?
-      assert options.first.is_a?(Array)
-      assert_equal 2, options.first.size
-    end
   end
 end

@@ -3,9 +3,8 @@ module RailsEventViewer
     layout "rails_event_viewer/application"
 
     before_action :authenticate!
-    around_action :use_viewer_time_zone
 
-    helper_method :current_timezone, :current_adapter, :analytics_supported?, :persistence_supported?
+    helper_method :current_adapter, :analytics_supported?, :persistence_supported?
 
     private
 
@@ -37,11 +36,6 @@ module RailsEventViewer
       render plain: "Unauthorized", status: :unauthorized unless auth.call(self) || performed?
     end
 
-    def use_viewer_time_zone(&block)
-      zone = ActiveSupport::TimeZone[cookies[:timezone].to_s] || ActiveSupport::TimeZone["UTC"]
-      Time.use_zone(zone, &block)
-    end
-
     def string_param(key)
       value = params[key]
       value if value.is_a?(String) && !value.empty?
@@ -54,10 +48,6 @@ module RailsEventViewer
       date.year.between?(1000, 9999) ? date : default
     rescue ArgumentError
       default
-    end
-
-    def current_timezone
-      Time.zone.name
     end
 
     def current_adapter

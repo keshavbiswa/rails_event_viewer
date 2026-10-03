@@ -10,18 +10,17 @@ module RailsEventViewer
       end
     end
 
-    # Format event time - works with both Entry model and Hash
     def format_event_time(event)
       time = event_occurred_at(event)
       return "N/A" unless time
 
-      time.strftime("%Y-%m-%d %H:%M:%S.%3N")
+      time.in_time_zone.strftime("%Y-%m-%d %H:%M:%S.%3N")
     end
 
     def time_ago_with_title(time)
       return "N/A" unless time
 
-      content_tag(:span, time_ago_in_words(time) + " ago", title: time.strftime("%Y-%m-%d %H:%M:%S %Z"))
+      content_tag(:span, time_ago_in_words(time) + " ago", title: time.in_time_zone.strftime("%Y-%m-%d %H:%M:%S %Z"))
     end
 
     def truncate_json(json, length: 100)
@@ -43,10 +42,6 @@ module RailsEventViewer
 
     def page_path(page)
       "#{request.path}?#{request.query_parameters.merge("page" => page.to_s).to_query}"
-    end
-
-    def timezone_options
-      ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }
     end
 
     # Helper to get attribute from either Entry model or Hash
