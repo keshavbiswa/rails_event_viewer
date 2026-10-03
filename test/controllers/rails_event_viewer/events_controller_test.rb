@@ -21,36 +21,20 @@ module RailsEventViewer
       assert_response :success
     end
 
-    test "index with name filter" do
-      Entry.create!(name: "other.event", occurred_at: Time.current)
+    test "each filter narrows the list to the matching events" do
+      other = Entry.create!(name: "other.event", payload: { note: "needle" }, tags: { environment: "prod" }, occurred_at: 3.days.ago)
 
-      get rails_event_viewer.events_path(name: "test.event")
+      {
+        { name: "other.event" } => [other.id],
+        { q: "needle" } => [other.id],
+        { tag_key: "environment", tag_value: "prod" } => [other.id],
+        { end_date: 2.days.ago.to_date.to_s } => [other.id],
+        { start_date: 1.day.ago.to_date.to_s } => [@event.id]
+      }.each do |params, expected|
+        get rails_event_viewer.events_path(params)
 
-      assert_response :success
-    end
-
-    test "index with date filters" do
-      get rails_event_viewer.events_path(
-        start_date: 1.day.ago.to_date.to_s,
-        end_date: Date.current.to_s
-      )
-
-      assert_response :success
-    end
-
-    test "index with tag filter" do
-      get rails_event_viewer.events_path(
-        tag_key: "environment",
-        tag_value: "test"
-      )
-
-      assert_response :success
-    end
-
-    test "index with search query" do
-      get rails_event_viewer.events_path(q: "test")
-
-      assert_response :success
+        assert_equal expected, controller.instance_variable_get(:@events).map(&:id), params.inspect
+      end
     end
 
     test "index paginates results" do
