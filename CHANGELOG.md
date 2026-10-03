@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.0 (2026-10-03)
+
+Breaking:
+
+- Removed `Adapter#distinct_group_values` and `Adapter#supports_retention?`. Nothing called them.
+- Removed `Entry#source_location`, `#short_filepath`, `#tagged?`, `#has_context?` and `#tag`.
+- The ActiveRecord adapter raises on unknown `adapter_options`, like the other adapters.
+- Times show in the host app's time zone. The engine no longer reads a `timezone` cookie.
+
+Changed:
+
+- New installs skip the index on `name` alone. The `(name, occurred_at)` index covers it. Existing apps can drop it with `remove_index :rails_event_viewer_entries, :name`.
+- Chartkick is pinned below 6, to match the bundled Chartkick.js.
+- Dashboard scripts load with `defer`.
+
+Fixed:
+
+- Events with the same timestamp keep a stable order across pages.
+- Pagination renders only the page links it shows, not one loop per page.
+- Related events look one hour either side of the event, so the lookup no longer scans the whole table.
+- Form fields have labels, tables have column headers, and the current page is marked for screen readers. Grey text has more contrast.
+
 ## 0.3.1 (2026-10-03)
 
 Changed:
