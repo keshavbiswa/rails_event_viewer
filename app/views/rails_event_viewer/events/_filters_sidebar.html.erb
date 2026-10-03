@@ -1,7 +1,8 @@
 <div class="bg-white rounded-lg shadow p-5 space-y-5">
   <h3 class="font-medium text-gray-900">Filters</h3>
 
-  <%= form_with url: rails_event_viewer.events_path, method: :get, data: { turbo_frame: "events_list" }, class: "space-y-5" do |f| %>
+  <%= form_with url: rails_event_viewer.events_path, method: :get, class: "space-y-5" do |f| %>
+    <%= f.hidden_field :q, value: @query if @query %>
 
     <!-- Event name filter -->
     <div>

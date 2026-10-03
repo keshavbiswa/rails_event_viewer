@@ -23,7 +23,7 @@
 
       <div class="flex items-center space-x-4">
         <!-- Search -->
-        <%= form_with url: rails_event_viewer.search_events_path, method: :get, class: "relative", data: { turbo_frame: "_top" } do |f| %>
+        <%= form_with url: rails_event_viewer.events_path, method: :get, class: "relative" do |f| %>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg class="h-4 w-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">

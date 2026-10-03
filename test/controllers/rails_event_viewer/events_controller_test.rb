@@ -97,27 +97,14 @@ module RailsEventViewer
       assert_response :success
     end
 
-    test "search renders index template" do
-      get rails_event_viewer.search_events_path(q: "test")
-      assert_response :success
-    end
+    test "search and filters apply together, and the sidebar keeps the search" do
+      Entry.create!(name: "test.other", tags: { environment: "prod" }, occurred_at: Time.current)
 
-    test "search with empty query" do
-      get rails_event_viewer.search_events_path(q: "")
+      get rails_event_viewer.events_path(q: "test", tag_key: "environment", tag_value: "test")
 
-      assert_response :success
-    end
-
-    test "search with matching results" do
-      get rails_event_viewer.search_events_path(q: "test.event")
-
-      assert_response :success
-    end
-
-    test "search with no matching results" do
-      get rails_event_viewer.search_events_path(q: "nonexistent")
-
-      assert_response :success
+      assert_equal [@event.id], controller.instance_variable_get(:@events).map(&:id)
+      assert_select "h1", /matching "test"/
+      assert_select "input[type=hidden][name=q][value=test]"
     end
 
     test "index ignores malformed params instead of crashing" do
