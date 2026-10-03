@@ -39,20 +39,20 @@ module RailsEventViewer
     end
 
     def find_related_events(event)
-      context = event.respond_to?(:context) ? event.context : event[:context]
+      context = event[:context]
       return [] unless context.present?
 
-      # Find events with matching request_id in context
       request_id = context["request_id"] || context[:request_id]
-      return [] unless request_id
-
-      event_id = event.respond_to?(:id) ? event.id : event[:id]
+      occurred_at = event[:occurred_at]
+      return [] unless request_id && occurred_at
 
       RailsEventViewer.events
         .with_context("request_id", request_id)
+        .since(occurred_at - 1.hour)
+        .until(occurred_at + 1.hour)
         .limit(11)
         .to_a
-        .reject { |e| (e.respond_to?(:id) ? e.id : e[:id]) == event_id }
+        .reject { |related| related[:id] == event[:id] }
         .first(10)
     end
   end

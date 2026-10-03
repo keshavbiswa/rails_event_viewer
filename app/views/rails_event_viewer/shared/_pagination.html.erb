@@ -29,13 +29,13 @@
           </span>
         <% end %>
 
-        <% (1..pagination.pages).each do |page_num| %>
-          <% if page_num == pagination.page %>
-            <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md"><%= page_num %></span>
-          <% elsif page_num == 1 || page_num == pagination.pages || (page_num >= pagination.page - 2 && page_num <= pagination.page + 2) %>
-            <%= link_to page_num, page_path(page_num), class: "relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" %>
-          <% elsif page_num == pagination.page - 3 || page_num == pagination.page + 3 %>
+        <% pagination.window.each do |page_num| %>
+          <% if page_num == :gap %>
             <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-700">...</span>
+          <% elsif page_num == pagination.page %>
+            <span class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md" aria-current="page"><%= page_num %></span>
+          <% else %>
+            <%= link_to page_num, page_path(page_num), class: "relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" %>
           <% end %>
         <% end %>
 

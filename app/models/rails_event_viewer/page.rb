@@ -31,5 +31,14 @@ module RailsEventViewer
     def next
       page + 1 if page < pages
     end
+
+    def window
+      numbers = [1, *(page - 2..page + 2), pages].select { |number| number.between?(1, pages) }.uniq.sort
+
+      numbers.each_with_object([]) do |number, items|
+        items << :gap if items.any? && number > items.last + 1
+        items << number
+      end
+    end
   end
 end
