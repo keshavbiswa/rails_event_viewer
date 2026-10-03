@@ -2,7 +2,8 @@
   <td class="px-6 py-4">
     <div class="flex flex-col max-w-md">
       <%= link_to event_name(event), rails_event_viewer.event_path(event_id(event)),
-            class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 w-fit" %>
+            title: event_name(event),
+            class: "inline-block max-w-full truncate px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 w-fit" %>
       <div class="text-sm text-gray-500 mt-1 truncate">
         <code class="text-xs"><%= truncate_json(event_payload(event), length: 50) %></code>
       </div>

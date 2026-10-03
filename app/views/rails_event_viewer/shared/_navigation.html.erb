@@ -1,13 +1,13 @@
 <nav class="bg-indigo-600">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex h-16 items-center justify-between">
+    <div class="flex min-h-16 flex-wrap items-center justify-between gap-y-2 py-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
           <%= link_to rails_event_viewer.root_path, class: "text-white text-xl font-bold" do %>
             Event Viewer
           <% end %>
         </div>
-        <div class="ml-10 flex items-baseline space-x-4">
+        <div class="ml-10 flex flex-wrap items-baseline space-x-4">
           <%= link_to "Dashboard", rails_event_viewer.root_path,
               class: nav_link_class("dashboard") %>
           <%= link_to "Events", rails_event_viewer.events_path,

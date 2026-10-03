@@ -8,15 +8,15 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     <% end %>
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900"><%= event_name(@event) %></h1>
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold text-gray-900 break-words"><%= event_name(@event) %></h1>
       <p class="text-sm text-gray-500">Event ID: <%= event_id(@event) %></p>
     </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main content -->
-    <div class="lg:col-span-2 space-y-6">
+    <div class="lg:col-span-2 space-y-6 min-w-0">
       <!-- Payload -->
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -30,7 +30,7 @@
         <div class="p-6">
           <% payload = event_payload(@event) %>
           <% if payload.present? %>
-            <div class="font-mono text-sm">
+            <div class="font-mono text-sm break-words">
               <%= json_tree(payload) %>
             </div>
           <% else %>
@@ -47,7 +47,7 @@
             <h3 class="text-lg font-medium text-gray-900">Tags</h3>
           </div>
           <div class="p-6">
-            <div class="font-mono text-sm">
+            <div class="font-mono text-sm break-words">
               <%= json_tree(tags) %>
             </div>
           </div>
@@ -62,7 +62,7 @@
             <h3 class="text-lg font-medium text-gray-900">Context</h3>
           </div>
           <div class="p-6">
-            <div class="font-mono text-sm">
+            <div class="font-mono text-sm break-words">
               <%= json_tree(context) %>
             </div>
           </div>

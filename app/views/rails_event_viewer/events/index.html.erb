@@ -15,9 +15,9 @@
     </div>
   </div>
 
-  <div class="flex gap-6">
+  <div class="flex flex-col lg:flex-row gap-6">
     <!-- Filters sidebar -->
-    <aside class="w-72 flex-shrink-0">
+    <aside class="w-full lg:w-72 flex-shrink-0">
       <%= render "rails_event_viewer/events/filters_sidebar", event_names: @event_names %>
     </aside>
 
