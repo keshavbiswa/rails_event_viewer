@@ -9,9 +9,9 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       <% end %>
-      <div>
+      <div class="min-w-0">
         <h1 class="text-2xl font-bold text-gray-900">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xl font-medium bg-indigo-100 text-indigo-800">
+          <span class="inline-block max-w-full break-words px-3 py-1 rounded-full text-xl font-medium bg-indigo-100 text-indigo-800">
             <%= @event_type_name %>
           </span>
         </h1>
@@ -56,7 +56,9 @@
             <% @events.each do |event| %>
               <tr class="hover:bg-gray-50 cursor-pointer" data-event-viewer-href="<%= rails_event_viewer.event_path(event_id(event)) %>">
                 <td class="px-6 py-4">
-                  <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 80) %></code>
+                  <%= link_to rails_event_viewer.event_path(event_id(event)) do %>
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= truncate_json(event_payload(event), length: 80) %></code>
+                  <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <% tags = event_tags(event) %>

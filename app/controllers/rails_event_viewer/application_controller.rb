@@ -48,10 +48,11 @@ module RailsEventViewer
     end
 
     def safe_parse_date(date_string, default: nil)
-      return default if date_string.blank?
+      return default unless date_string.is_a?(String) && date_string.present?
 
-      Date.parse(date_string)
-    rescue Date::Error, TypeError
+      date = Date.parse(date_string)
+      date.year.between?(1000, 9999) ? date : default
+    rescue ArgumentError
       default
     end
 
@@ -72,11 +73,11 @@ module RailsEventViewer
     end
 
     def per_page
-      (params[:per_page] || RailsEventViewer.per_page).to_i.clamp(1, 100)
+      (string_param(:per_page) || RailsEventViewer.per_page).to_i.clamp(1, 100)
     end
 
     def paginate(relation)
-      pagination = Page.new(count: relation.count, per_page: per_page, page: params[:page])
+      pagination = Page.new(count: relation.count, per_page: per_page, page: string_param(:page))
       [pagination, relation.offset(pagination.offset).limit(pagination.per_page).to_a]
     end
   end

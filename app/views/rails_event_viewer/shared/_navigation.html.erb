@@ -1,13 +1,13 @@
 <nav class="bg-indigo-600">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex h-16 items-center justify-between">
+    <div class="flex min-h-16 flex-wrap items-center justify-between gap-y-2 py-2">
       <div class="flex items-center">
         <div class="flex-shrink-0">
           <%= link_to rails_event_viewer.root_path, class: "text-white text-xl font-bold" do %>
             Event Viewer
           <% end %>
         </div>
-        <div class="ml-10 flex items-baseline space-x-4">
+        <div class="ml-10 flex flex-wrap items-baseline space-x-4">
           <%= link_to "Dashboard", rails_event_viewer.root_path,
               class: nav_link_class("dashboard") %>
           <%= link_to "Events", rails_event_viewer.events_path,
@@ -16,14 +16,16 @@
               class: nav_link_class("event_types") %>
           <%= link_to "Groups", rails_event_viewer.groups_path,
               class: nav_link_class("groups") %>
-          <%= link_to "Analytics", rails_event_viewer.analytics_overview_path,
-              class: nav_link_class("analytics") %>
+          <% if analytics_supported? %>
+            <%= link_to "Analytics", rails_event_viewer.analytics_overview_path,
+                class: nav_link_class("analytics") %>
+          <% end %>
         </div>
       </div>
 
       <div class="flex items-center space-x-4">
         <!-- Search -->
-        <%= form_with url: rails_event_viewer.search_events_path, method: :get, class: "relative", data: { turbo_frame: "_top" } do |f| %>
+        <%= form_with url: rails_event_viewer.events_path, method: :get, class: "relative" do |f| %>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg class="h-4 w-4 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">

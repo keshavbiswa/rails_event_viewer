@@ -25,13 +25,13 @@ module RailsEventViewer
     end
 
     def truncate_json(json, length: 100)
-      text = json.is_a?(Hash) ? json.to_json : json.to_s
+      text = json.is_a?(Hash) ? JSON.generate(json) : json.to_s
       truncate(text, length: length)
     end
 
     def json_tree(data, depth: 0, max_depth: nil)
       return content_tag(:span, "null", class: "text-gray-400") if data.nil?
-      return content_tag(:span, data.to_json, class: json_value_class(data)) unless data.is_a?(Hash) || data.is_a?(Array)
+      return content_tag(:span, JSON.generate(data), class: json_value_class(data)) unless data.is_a?(Hash) || data.is_a?(Array)
       return content_tag(:span, collapsed_summary(data), class: "text-gray-400") if max_depth && depth >= max_depth
 
       if data.is_a?(Hash)

@@ -99,7 +99,7 @@ module RailsEventViewer
       def delete_before(timestamp)
         score = (timestamp.to_f * 1_000_000).to_i
         @redis.with do |conn|
-          deleted = conn.zremrangebyscore(events_key, "-inf", score)
+          deleted = conn.zremrangebyscore(events_key, "-inf", "(#{score}")
           prune_names(conn)
           deleted
         end
@@ -155,8 +155,8 @@ module RailsEventViewer
 
       def serialize_event(event, timestamp_usec = nil)
         timestamp_usec ||= (event[:occurred_at].to_f * 1_000_000).to_i
-        event_with_id = event.merge(id: "#{timestamp_usec}-#{SecureRandom.hex(8)}")
-        JSON.generate(event_with_id)
+        stored = event.merge(id: "#{timestamp_usec}-#{SecureRandom.hex(8)}", occurred_at: event[:occurred_at]&.iso8601(6))
+        JSON.generate(stored)
       end
 
       def deserialize_event(json)

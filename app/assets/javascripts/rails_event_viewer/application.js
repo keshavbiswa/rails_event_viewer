@@ -22,7 +22,8 @@ document.addEventListener("click", (event) => {
   }
 
   const row = event.target.closest("[data-event-viewer-href]")
-  if (row && !event.target.closest("a, button")) {
+  const selectingText = window.getSelection().toString() !== ""
+  if (row && !selectingText && !event.target.closest("a, button")) {
     window.location = row.dataset.eventViewerHref
   }
 })

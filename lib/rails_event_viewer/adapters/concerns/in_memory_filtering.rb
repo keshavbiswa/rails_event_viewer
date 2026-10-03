@@ -41,6 +41,13 @@ module RailsEventViewer
           (limit ? counts.first(limit) : counts).to_h
         end
 
+        def event_type_statistics
+          statistics = in_memory_events.group_by { |e| e[:name] }.map do |name, events|
+            { name: name, count: events.size, last_event_at: events.filter_map { |e| e[:occurred_at] }.max }
+          end
+          statistics.sort_by { |statistic| -statistic[:count] }
+        end
+
         private
 
         def events_in(range)

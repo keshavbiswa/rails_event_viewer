@@ -1,11 +1,7 @@
 RailsEventViewer::Engine.routes.draw do
   root to: "dashboard#index"
 
-  resources :events, only: [:index, :show] do
-    collection do
-      get :search
-    end
-  end
+  resources :events, only: [:index, :show]
 
   namespace :analytics do
     get :overview

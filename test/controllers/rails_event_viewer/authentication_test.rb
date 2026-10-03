@@ -42,16 +42,22 @@ module RailsEventViewer
       assert_response :forbidden
     end
 
-    test "basic auth accepts configured credentials and rejects wrong ones" do
-      RailsEventViewer.http_basic_auth_enabled = true
-      RailsEventViewer.http_basic_auth_user = "admin"
-      RailsEventViewer.http_basic_auth_password = "secret"
-
-      get rails_event_viewer.root_path, headers: basic_auth("admin", "wrong")
-      assert_response :unauthorized
+    test "basic auth accepts the configured credentials" do
+      enable_basic_auth
 
       get rails_event_viewer.root_path, headers: basic_auth("admin", "secret")
+
       assert_response :success
+    end
+
+    test "basic auth rejects a wrong user, a wrong password, or no credentials" do
+      enable_basic_auth
+
+      [basic_auth("admin", "wrong"), basic_auth("wrong", "secret"), {}].each do |headers|
+        get rails_event_viewer.root_path, headers: headers
+
+        assert_response :unauthorized
+      end
     end
 
     test "basic auth with a user but no password is forbidden" do
@@ -63,12 +69,14 @@ module RailsEventViewer
       assert_response :forbidden
     end
 
-    test "custom authentication returning false is unauthorized" do
-      RailsEventViewer.authentication = ->(_controller) { false }
+    test "custom authentication returning false or nil is unauthorized" do
+      [false, nil].each do |result|
+        RailsEventViewer.authentication = ->(_controller) { result }
 
-      get rails_event_viewer.root_path
+        get rails_event_viewer.root_path
 
-      assert_response :unauthorized
+        assert_response :unauthorized
+      end
     end
 
     test "custom authentication that redirects keeps the redirect" do
@@ -89,6 +97,12 @@ module RailsEventViewer
     end
 
     private
+
+    def enable_basic_auth
+      RailsEventViewer.http_basic_auth_enabled = true
+      RailsEventViewer.http_basic_auth_user = "admin"
+      RailsEventViewer.http_basic_auth_password = "secret"
+    end
 
     def basic_auth(user, password)
       { "HTTP_AUTHORIZATION" => ActionController::HttpAuthentication::Basic.encode_credentials(user, password) }

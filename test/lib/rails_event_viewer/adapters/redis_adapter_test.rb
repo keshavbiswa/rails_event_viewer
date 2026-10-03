@@ -170,6 +170,16 @@ module RailsEventViewer
         assert_equal ["order.placed", "user.created"], names
       end
 
+      test "events keep their microseconds, and delete_before leaves an event at the exact cutoff" do
+        cutoff = Time.at(1_700_000_000, 123_456, :usec)
+        write_event("at.cutoff", occurred_at: cutoff)
+
+        assert_equal 0, @adapter.delete_before(cutoff)
+
+        stored = @adapter.fetch_events(EventsRelation.new(adapter: @adapter)).first
+        assert_equal cutoff, stored[:occurred_at]
+      end
+
       test "delete_before removes old events" do
         write_event("old", occurred_at: 2.days.ago)
         write_event("new", occurred_at: 1.hour.ago)

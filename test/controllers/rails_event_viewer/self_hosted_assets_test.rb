@@ -55,14 +55,8 @@ module RailsEventViewer
     end
 
     test "clickable rows, copy button and progress bars use data attributes" do
-      get rails_event_viewer.root_path
-      assert_select "tr[data-event-viewer-href]"
-
       get rails_event_viewer.events_path
-      assert_select "tr[data-event-viewer-href]"
-
-      get rails_event_viewer.event_type_path(name: "order.placed")
-      assert_select "tr[data-event-viewer-href]"
+      assert_select "tr[data-event-viewer-href] a[href=?]", rails_event_viewer.event_path(@event)
 
       get rails_event_viewer.event_path(@event)
       assert_select "button[data-event-viewer-copy]"

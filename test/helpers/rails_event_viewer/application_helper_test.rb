@@ -57,6 +57,16 @@ module RailsEventViewer
       assert_match(/null/, result)
     end
 
+    test "#json_tree and #truncate_json show special characters readably and escape them once" do
+      payload = { note: "Tom & Jerry <b>" }
+
+      [json_tree(payload), ERB::Util.html_escape(truncate_json(payload))].each do |html|
+        assert_includes html, "Tom &amp; Jerry &lt;b&gt;"
+        assert_not_includes html, "\\u0026"
+        assert_not_includes html, "<b>"
+      end
+    end
+
     test "#json_tree with empty hash" do
       result = json_tree({})
 
