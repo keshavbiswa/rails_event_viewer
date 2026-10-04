@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.2 (2026-10-04)
+
+Changed:
+
+- Group durations are rounded and show only the two largest units.
+- Source paths on the event page are shortened. Hover shows the full path.
+- The event count has thousands separators.
+- The events-by-type chart uses ten distinct colours.
+- Timeline offsets step through minutes, hours and days.
+- The 24-hour chart starts on a whole hour.
+
 ## 0.4.1 (2026-10-03)
 
 Added:
