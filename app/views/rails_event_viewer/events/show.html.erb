@@ -97,8 +97,8 @@
             <div class="px-6 py-4">
               <dt class="text-sm font-medium text-gray-500">Source Location</dt>
               <dd class="mt-1 text-sm text-gray-900">
-                <code class="bg-gray-100 px-2 py-1 rounded text-xs break-all">
-                  <%= filepath %>:<%= @event[:source_line] %>
+                <code class="bg-gray-100 px-2 py-1 rounded text-xs break-all" title="<%= filepath %>">
+                  <%= event_short_filepath(@event) %>:<%= @event[:source_line] %>
                 </code>
                 <% label = @event[:source_label] %>
                 <% if label.present? %>

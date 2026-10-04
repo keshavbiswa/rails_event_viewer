@@ -136,6 +136,10 @@ module RailsEventViewer
       assert_equal "5 seconds", format_duration(5)
     end
 
+    test "#format_duration rounds fractional seconds" do
+      assert_equal "1 minute and 1 second", format_duration(60.9426150000000035)
+    end
+
     test "#format_duration with one second" do
       assert_equal "1 second", format_duration(1)
     end
@@ -152,13 +156,8 @@ module RailsEventViewer
       assert_equal "1 hour", format_duration(3600)
     end
 
-    test "#format_duration with complex duration" do
-      # 1 hour, 2 minutes, 3 seconds = 3723 seconds
-      result = format_duration(3723)
-
-      assert_match(/1 hour/, result)
-      assert_match(/2 minutes/, result)
-      assert_match(/3 seconds/, result)
+    test "#format_duration shows the two largest units" do
+      assert_equal "1 hour and 2 minutes", format_duration(3723)
     end
 
     test "#format_duration with days" do
