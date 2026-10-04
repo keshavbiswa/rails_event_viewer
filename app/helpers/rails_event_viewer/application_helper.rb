@@ -58,12 +58,12 @@ module RailsEventViewer
     def format_duration(seconds)
       return "-" unless seconds
 
-      duration = ActiveSupport::Duration.build(seconds)
+      duration = ActiveSupport::Duration.build(seconds.round)
       parts = duration.parts
 
       return "0 seconds" if parts.empty? || parts == { seconds: 0 }
 
-      parts.map { |unit, value|
+      parts.first(2).map { |unit, value|
         unit_name = value == 1 ? unit.to_s.singularize : unit.to_s
         "#{value} #{unit_name}"
       }.to_sentence

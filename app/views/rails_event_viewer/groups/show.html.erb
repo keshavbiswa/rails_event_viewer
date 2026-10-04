@@ -64,8 +64,12 @@
                       +<%= (offset * 1000).round %>ms
                     <% elsif offset < 60 %>
                       +<%= offset.round(1) %>s
+                    <% elsif offset < 1.hour %>
+                      +<%= (offset / 1.minute).round %>m
+                    <% elsif offset < 1.day %>
+                      +<%= (offset / 1.hour).round %>h
                     <% else %>
-                      +<%= (offset / 60).round %>m
+                      +<%= (offset / 1.day).round %>d
                     <% end %>
                   </span>
                 </div>
