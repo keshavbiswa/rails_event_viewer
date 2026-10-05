@@ -33,7 +33,7 @@ module RailsEventViewer
       }.each do |params, expected|
         get rails_event_viewer.events_path(params)
 
-        assert_equal expected, controller.instance_variable_get(:@events).map(&:id), params.inspect
+        assert_equal expected, controller.instance_variable_get(:@events).pluck(:id), params.inspect
       end
     end
 
@@ -86,7 +86,7 @@ module RailsEventViewer
 
       get rails_event_viewer.events_path(q: "test", tag_key: "environment", tag_value: "test")
 
-      assert_equal [@event.id], controller.instance_variable_get(:@events).map(&:id)
+      assert_equal [@event.id], controller.instance_variable_get(:@events).pluck(:id)
       assert_select "h1", /matching "test"/
       assert_select "input[type=hidden][name=q][value=test]"
     end
@@ -136,7 +136,7 @@ module RailsEventViewer
       get rails_event_viewer.event_path(@event)
 
       related_events = controller.instance_variable_get(:@related_events)
-      assert_equal [related.id], related_events.map(&:id)
+      assert_equal [related.id], related_events.pluck(:id)
     end
 
     test "index filters by context key and value" do
@@ -144,7 +144,7 @@ module RailsEventViewer
 
       get rails_event_viewer.events_path(context_key: "request_id", context_value: "abc123")
 
-      assert_equal [@event.id], controller.instance_variable_get(:@events).map(&:id)
+      assert_equal [@event.id], controller.instance_variable_get(:@events).pluck(:id)
     end
 
     test "index filters by a numeric context value typed as text" do
@@ -152,7 +152,7 @@ module RailsEventViewer
 
       get rails_event_viewer.events_path(context_key: "order_id", context_value: "42")
 
-      assert_equal [numeric.id], controller.instance_variable_get(:@events).map(&:id)
+      assert_equal [numeric.id], controller.instance_variable_get(:@events).pluck(:id)
     end
 
     test "index does not raise on tag and context keys that are not valid JSON paths" do
@@ -170,7 +170,7 @@ module RailsEventViewer
       get rails_event_viewer.events_path(page: 2)
       pagination = controller.instance_variable_get(:@pagination)
       assert_equal [2, 2, 30], [pagination.page, pagination.pages, pagination.count]
-      assert_equal (24..28).map { |i| "bulk.#{i}" }, controller.instance_variable_get(:@events).map(&:name)
+      assert_equal (24..28).map { |i| "bulk.#{i}" }, controller.instance_variable_get(:@events).pluck(:name)
       assert_select "a[href*='page=1']"
 
       get rails_event_viewer.events_path(page: 99)
@@ -188,7 +188,7 @@ module RailsEventViewer
       assert_includes links, rails_event_viewer.events_path(name: "keep.me", page: 2, per_page: 10)
 
       get links.find { |link| link.include?("page=2") }
-      assert_equal ["keep.me"], controller.instance_variable_get(:@events).map(&:name).uniq
+      assert_equal ["keep.me"], controller.instance_variable_get(:@events).pluck(:name).uniq
       assert_equal 10, controller.instance_variable_get(:@events).size
     end
 

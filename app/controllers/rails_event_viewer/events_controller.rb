@@ -42,7 +42,7 @@ module RailsEventViewer
       context = event[:context]
       return [] unless context.present?
 
-      request_id = context["request_id"] || context[:request_id]
+      request_id = context[:request_id]
       occurred_at = event[:occurred_at]
       return [] unless request_id && occurred_at
 
