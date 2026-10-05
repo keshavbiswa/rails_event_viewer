@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+Breaking:
+
+- The ActiveRecord adapter returns events as hashes with symbol keys, like the Memory and Redis adapters. Call `event[:name]`, not `event.name`, and `event[:payload][:order_id]`, not `event.payload["order_id"]`.
+
 ## 0.4.2 (2026-10-04)
 
 Changed:

@@ -10,7 +10,7 @@ module RailsEventViewer
     test "last returns the oldest event across all pages" do
       30.times { |i| Entry.create!(name: "event.#{i}", occurred_at: i.minutes.ago) }
 
-      assert_equal "event.29", @relation.last.name
+      assert_equal "event.29", @relation.last[:name]
     end
 
     test "last returns nil when empty" do
@@ -23,7 +23,7 @@ module RailsEventViewer
 
       results = @relation.with_name("user.created").to_a
       assert_equal 1, results.size
-      assert_equal "user.created", results.first.name
+      assert_equal "user.created", results.first[:name]
     end
 
     test "with_name filters by multiple names" do
@@ -41,7 +41,7 @@ module RailsEventViewer
 
       results = @relation.with_tag(:env, "production").to_a
       assert_equal 1, results.size
-      assert_equal "event1", results.first.name
+      assert_equal "event1", results.first[:name]
     end
 
     test "search filters by name or payload" do
@@ -50,7 +50,7 @@ module RailsEventViewer
 
       results = @relation.search("user").to_a
       assert_equal 1, results.size
-      assert_equal "user.created", results.first.name
+      assert_equal "user.created", results.first[:name]
     end
 
     test "since filters by time" do
@@ -59,7 +59,7 @@ module RailsEventViewer
 
       results = @relation.since(1.day.ago).to_a
       assert_equal 1, results.size
-      assert_equal "new", results.first.name
+      assert_equal "new", results.first[:name]
     end
 
     test "until filters by time" do
@@ -68,7 +68,7 @@ module RailsEventViewer
 
       results = @relation.until(1.day.ago).to_a
       assert_equal 1, results.size
-      assert_equal "old", results.first.name
+      assert_equal "old", results.first[:name]
     end
 
     test "limit restricts results" do
@@ -103,8 +103,8 @@ module RailsEventViewer
       Entry.create!(name: "second", occurred_at: Time.current)
 
       result = @relation.first
-      assert_equal "second", result.name
-      assert_equal %w[first], @relation.with_name(:first).to_a.map(&:name)
+      assert_equal "second", result[:name]
+      assert_equal %w[first], @relation.with_name(:first).to_a.pluck(:name)
     end
 
     test "any? returns true when events exist" do
@@ -124,7 +124,7 @@ module RailsEventViewer
       3.times { Entry.create!(name: "test", occurred_at: Time.current) }
 
       names = []
-      @relation.each { |e| names << e.name }
+      @relation.each { |e| names << e[:name] }
       assert_equal 3, names.size
     end
 

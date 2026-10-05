@@ -42,8 +42,10 @@ RailsEventViewer.events
   .with_tag(:priority, "high")
   .since(1.day.ago)
   .limit(50)
-  .to_a
+  .map { |event| event[:payload][:order_id] }
 ```
+
+Each event is a hash with symbol keys, whichever adapter stores it.
 
 Other filters: `with_context`, `search`, `until`, `offset`, and `count`.
 Without `limit`, a query returns `config.per_page` events, 25 by default.

@@ -70,8 +70,8 @@ module RailsEventViewer
         relation = EventsRelation.new(adapter: @adapter)
         results = @adapter.fetch_events(relation).to_a
 
-        assert_equal "new", results.first.name
-        assert_equal "old", results.last.name
+        assert_equal "new", results.first[:name]
+        assert_equal "old", results.last[:name]
       end
 
       test "fetch_events applies limit and offset" do
@@ -91,7 +91,7 @@ module RailsEventViewer
         results = @adapter.fetch_events(relation).to_a
 
         assert_equal 1, results.size
-        assert_equal "user.created", results.first.name
+        assert_equal "user.created", results.first[:name]
       end
 
       test "fetch_events filters by multiple names" do
@@ -113,7 +113,7 @@ module RailsEventViewer
         results = @adapter.fetch_events(relation).to_a
 
         assert_equal 1, results.size
-        assert_equal "new", results.first.name
+        assert_equal "new", results.first[:name]
       end
 
       test "fetch_events filters by search query on name" do
@@ -124,7 +124,7 @@ module RailsEventViewer
         results = @adapter.fetch_events(relation).to_a
 
         assert_equal 1, results.size
-        assert_equal "user.created", results.first.name
+        assert_equal "user.created", results.first[:name]
       end
 
       test "count_events returns total count" do
@@ -152,10 +152,11 @@ module RailsEventViewer
       end
 
       test "find_event returns entry by id" do
-        entry = Entry.create!(name: "test", occurred_at: Time.current)
+        entry = Entry.create!(name: "test", payload: { order: { id: 7 } }, occurred_at: Time.current)
 
         found = @adapter.find_event(entry.id)
-        assert_equal entry.id, found.id
+        assert_equal entry.id, found[:id]
+        assert_equal 7, found[:payload][:order][:id]
       end
 
       test "find_event returns nil for missing id" do
@@ -339,9 +340,9 @@ module RailsEventViewer
 
         relation = EventsRelation.new(adapter: @adapter)
 
-        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("50%")).map(&:name)
-        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("off_now")).map(&:name)
-        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("now!")).map(&:name)
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("50%")).pluck(:name)
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("off_now")).pluck(:name)
+        assert_equal ["sale.started"], @adapter.fetch_events(relation.search("now!")).pluck(:name)
       end
 
       test "fetch_last returns the oldest matching event" do
@@ -349,7 +350,7 @@ module RailsEventViewer
         oldest = Entry.create!(name: "a", occurred_at: 1.day.ago)
         Entry.create!(name: "b", occurred_at: 2.days.ago)
 
-        assert_equal oldest, EventsRelation.new(adapter: @adapter).with_name("a").last
+        assert_equal oldest.id, EventsRelation.new(adapter: @adapter).with_name("a").last[:id]
       end
     end
   end

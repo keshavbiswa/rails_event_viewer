@@ -36,6 +36,7 @@ module RailsEventViewer
         build_scope(relation)
           .offset(relation.offset_value)
           .limit(relation.limit_value)
+          .map { |entry| to_event(entry) }
       end
 
       def count_events(relation)
@@ -47,7 +48,8 @@ module RailsEventViewer
       end
 
       def find_event(id)
-        Entry.find_by(id: id)
+        entry = Entry.find_by(id: id)
+        to_event(entry) if entry
       end
 
       def delete_before(timestamp)
@@ -111,7 +113,8 @@ module RailsEventViewer
       end
 
       def fetch_last(relation)
-        build_scope(relation).reorder(occurred_at: :asc, id: :asc).first
+        entry = build_scope(relation).reorder(occurred_at: :asc, id: :asc).first
+        to_event(entry) if entry
       end
 
       def event_time_span(relation)
@@ -124,6 +127,10 @@ module RailsEventViewer
       end
 
       private
+
+      def to_event(entry)
+        entry.attributes.deep_symbolize_keys
+      end
 
       def parse_timestamp(value)
         return nil if value.nil?
