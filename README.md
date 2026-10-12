@@ -39,7 +39,7 @@ Query them from code:
 ```ruby
 RailsEventViewer.events
   .with_name("order.placed")
-  .with_tag(:priority, "high")
+  .with_tag(priority: "high")
   .since(1.day.ago)
   .limit(50)
   .map { |event| event[:payload][:order_id] }

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+Added:
+
+- `with_tag` and `with_context` accept a hash, like `with_tag(environment: "production", region: "eu")`.
+
 ## 0.5.0 (2026-10-05)
 
 Breaking:

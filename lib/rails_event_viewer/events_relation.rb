@@ -25,12 +25,20 @@ module RailsEventViewer
     end
 
     def with_tag(key, value = nil)
+      if key.is_a?(Hash)
+        return key.reduce(self) { |relation, (tag_key, tag_value)| relation.with_tag(tag_key, tag_value) }
+      end
+
       return self if key.blank?
 
       clone_with { |rel| rel.tags[key.to_s] = value }
     end
 
     def with_context(key, value = nil)
+      if key.is_a?(Hash)
+        return key.reduce(self) { |relation, (context_key, context_value)| relation.with_context(context_key, context_value) }
+      end
+
       return self if key.blank?
 
       clone_with { |rel| rel.contexts[key.to_s] = value }

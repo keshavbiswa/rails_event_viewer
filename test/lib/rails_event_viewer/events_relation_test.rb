@@ -44,6 +44,14 @@ module RailsEventViewer
       assert_equal "event1", results.first[:name]
     end
 
+    test "with_tag accepts a hash of tag keys and values" do
+      Entry.create!(name: "event1", tags: { "env" => "production", "region" => "eu" }, occurred_at: Time.current)
+      Entry.create!(name: "event2", tags: { "env" => "production", "region" => "us" }, occurred_at: Time.current)
+
+      results = @relation.with_tag(env: "production", region: "eu").to_a
+      assert_equal ["event1"], results.pluck(:name)
+    end
+
     test "search filters by name or payload" do
       Entry.create!(name: "user.created", payload: { "email" => "test@example.com" }, occurred_at: Time.current)
       Entry.create!(name: "order.placed", payload: { "item" => "widget" }, occurred_at: Time.current)
